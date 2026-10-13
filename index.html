@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACE-USF Portal | Apostolic Church of Ethiopia University Students Fellowship</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
+
+  <!-- TOP UTILITY BAR -->
+  <div class="bg-slate-950 text-slate-300 text-[11px] py-1.5 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 flex justify-between items-center whitespace-nowrap">
+      <div class="flex items-center space-x-4">
+        <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-amber-500"></i> info@aceusf.org</span>
+        <span class="hidden sm:flex items-center gap-1.5"><i class="fa-solid fa-phone text-amber-500"></i> +251 900 000 000</span>
+        <span class="hidden md:inline-block text-slate-600">|</span>
+        <span class="hidden md:inline-block text-slate-200 font-medium truncate">Apostolic Church of Ethiopia Fellowship Network</span>
+      </div>
+      
+      <!-- Language Switcher & Social Links -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-0.5 text-[10px] font-bold">
+          <button id="lang-en-btn" type="button" class="px-2 py-0.5 rounded-md bg-amber-500 text-slate-950">EN</button>
+          <button id="lang-am-btn" type="button" class="px-2 py-0.5 rounded-md text-slate-300 hover:text-white transition">አማ</button>
+        </div>
+        <div class="flex items-center space-x-2.5">
+          <a href="https://t.me" target="_blank" class="hover:text-amber-400 transition" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+          <a href="#" class="hover:text-amber-400 transition" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MASTER NAVIGATION HEADER -->
+  <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-4">
+      
+      <!-- Brand & Logo -->
+      <div class="flex items-center space-x-3 shrink-0">
+        <div id="portal-logo-container" class="bg-amber-500 text-slate-950 font-extrabold p-2 rounded-xl text-lg flex items-center justify-center shadow w-10 h-10 border border-amber-400 shrink-0">
+          <i class="fa-solid fa-cross"></i>
+        </div>
+        <div class="whitespace-nowrap">
+          <h1 class="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-2">
+            ACE-USF <span id="header-subtitle-long" class="text-xs font-normal text-amber-400 hidden lg:inline">APOSTOLIC CHURCH OF ETHIOPIA UNIVERSITY STUDENTS FELLOWSHIP</span>
+          </h1>
+          <p id="header-subtitle-short" class="text-[10px] text-slate-300 sm:block hidden">Apostolic Church of Ethiopia University Students Fellowship</p>
+        </div>
+      </div>
+
+      <!-- Clean Single-Line Navigation Links -->
+      <nav class="hidden md:flex items-center space-x-6 text-xs font-semibold text-slate-200 whitespace-nowrap shrink-0">
+        <a href="#" class="hover:text-amber-400 transition flex items-center gap-1.5 py-1 text-white border-b-2 border-amber-500">
+          <i class="fa-solid fa-house text-amber-500"></i> <span class="lang-text-home">Home</span>
+        </a>
+        <a href="#hubs-section" class="hover:text-amber-400 transition flex items-center gap-1.5 py-1">
+          <i class="fa-solid fa-network-wired text-amber-500"></i> <span class="lang-text-network">Campus Network</span>
+        </a>
+        <a href="#sermons-section" class="hover:text-amber-400 transition flex items-center gap-1.5 py-1">
+          <i class="fa-solid fa-book-bible text-amber-500"></i> <span class="lang-text-library">Apostolic Library</span>
+        </a>
+      </nav>
+
+      <!-- Auth Action & Interactive User Profile Dropdown -->
+      <div class="relative flex items-center space-x-3 shrink-0">
+        <!-- Guest Sign In Button -->
+        <button id="auth-btn" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-2">
+          <i class="fa-solid fa-user-lock"></i> <span id="auth-btn-text">Sign In</span>
+        </button>
+
+        <!-- Logged-In User Profile Trigger Badge -->
+        <div id="user-header-profile" class="hidden relative">
+          <button id="user-menu-trigger" type="button" class="flex items-center space-x-2.5 bg-slate-800 hover:bg-slate-700 py-1.5 px-3 rounded-xl border border-slate-700 transition cursor-pointer">
+            <div class="w-7 h-7 rounded-lg bg-teal-800 text-amber-400 font-extrabold flex items-center justify-center text-xs shadow-xs">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="text-left hidden sm:block">
+              <p id="header-user-name" class="text-xs font-bold text-white leading-tight">Member</p>
+              <p id="header-user-campus" class="text-[9px] text-amber-400 leading-tight">Campus Fellow</p>
+            </div>
+            <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] ml-1"></i>
+          </button>
+
+          <!-- Dropdown Profile Details Menu (Prevents accidental sign out) -->
+          <div id="user-dropdown-menu" class="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 space-y-3 hidden z-50 text-slate-800">
+            <div class="flex items-center space-x-3 pb-3 border-b border-gray-100">
+              <div class="w-10 h-10 rounded-xl bg-teal-800 text-amber-400 font-extrabold flex items-center justify-center text-sm">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div class="overflow-hidden">
+                <h4 id="dropdown-full-name" class="text-xs font-extrabold text-gray-900 truncate">Abebe Bikila</h4>
+                <p id="dropdown-campus" class="text-[10px] text-teal-800 font-semibold truncate">Addis Ababa University</p>
+                <span id="dropdown-role" class="inline-block mt-0.5 text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                  Fellowship Student
+                </span>
+              </div>
+            </div>
+
+            <div class="text-[11px] text-gray-500 space-y-1.5 py-1">
+              <p class="flex items-center gap-2 truncate"><i class="fa-solid fa-envelope text-gray-400 text-xs"></i> <span id="dropdown-email">student@campus.edu.et</span></p>
+              <p class="flex items-center gap-2 text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check text-xs"></i> Verified Apostolic Member</p>
+            </div>
+
+            <div class="pt-2 border-t border-gray-100">
+              <button id="header-logout-btn" type="button" class="w-full bg-red-50 hover:bg-red-100 text-red-700 font-bold py-2 rounded-xl text-xs transition flex items-center justify-center gap-2 border border-red-200">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Banner with Cross Watermark -->
+  <section class="max-w-7xl mx-auto px-4 w-full mt-6">
+    <div class="relative overflow-hidden bg-gradient-to-r from-teal-800 via-teal-900 to-blue-950 text-white py-10 px-8 sm:px-12 rounded-3xl shadow-xl">
+      <div class="absolute -right-12 -bottom-12 text-teal-700/30 text-[220px] pointer-events-none select-none">
+        <i class="fa-solid fa-cross"></i>
+      </div>
+      <div class="relative z-10 max-w-2xl space-y-3">
+        <span class="inline-flex items-center gap-2 bg-teal-800/80 text-teal-200 text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider border border-teal-700 shadow-sm">
+          <i class="fa-solid fa-sparkles text-amber-400"></i> One Lord, One Faith, One Spirit Across Nations
+        </span>
+        <h2 id="hero-title" class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+          Apostolic Church of Ethiopia University Students Fellowship
+        </h2>
+        <p id="hero-desc" class="text-teal-100 text-xs sm:text-sm leading-relaxed">
+          Uniting and empowering Apostolic students across public and private universities and colleges in Ethiopia through pastoral teachings, spiritual literature, worship networks, and mentorship.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Highlights Bar -->
+  <section id="about-section" class="max-w-7xl mx-auto px-4 w-full my-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+        
+        <a href="#about-section" onclick="alert('ACE-USF is dedicated to unifying and strengthening Apostolic Church students in all Ethiopian higher education institutions.')" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg group-hover:bg-teal-800 group-hover:text-white transition">
+            <i class="fa-solid fa-church"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">About ACE-USF</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Empowering Apostolic students in higher education institutions.</p>
+          </div>
+        </a>
+
+        <a href="#hubs-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg group-hover:bg-amber-500 group-hover:text-slate-950 transition">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Fellowship Leaders</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Connect with national & campus fellowship coordinators.</p>
+          </div>
+        </a>
+
+        <a href="#sermons-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-lg group-hover:bg-blue-800 group-hover:text-white transition">
+            <i class="fa-solid fa-book-bible"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Apostolic Library</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Spiritual literature & upcoming academic study resources.</p>
+          </div>
+        </a>
+
+        <a href="#weather-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-800 flex items-center justify-center text-lg group-hover:bg-sky-600 group-hover:text-white transition">
+            <i class="fa-solid fa-cloud-sun"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Campus Weather</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Live temperature updates across Ethiopian campus cities.</p>
+          </div>
+        </a>
+
+        <a href="#forum-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center text-lg group-hover:bg-purple-800 group-hover:text-white transition">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Student Forum</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Real-time testimonies, prayer requests, & guidance.</p>
+          </div>
+        </a>
+
+        <a href="#students-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg group-hover:bg-emerald-800 group-hover:text-white transition">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Freshmen & Alumni</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Orientation guides for new students & graduate directory.</p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Dashboard Grid -->
+  <main id="app-dashboard" class="max-w-7xl mx-auto px-4 py-2 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+    
+    <!-- LEFT SIDEBAR (3 Cols) -->
+    <aside class="lg:col-span-3 space-y-6">
+      
+      <!-- Fellowship Leadership Contacts Card -->
+      <div id="hubs-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-user-gear text-amber-500"></i> Fellowship Leaders
+        </h4>
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-gray-100 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900">National Executive</p>
+              <p class="text-[10px] text-gray-500">ACE-USF National Board</p>
+            </div>
+            <a href="mailto:info@aceusf.org" class="text-teal-800 hover:text-teal-600 font-bold text-xs"><i class="fa-solid fa-envelope"></i></a>
+          </div>
+          <div class="p-2.5 rounded-xl bg-slate-50 border border-gray-100 flex items-center justify-between">
+            <div>
+              <p class="font-bold text-slate-900">Campus Coordinators</p>
+              <p class="text-[10px] text-gray-500">Regional Campus Leaders</p>
+            </div>
+            <a href="https://t.me" target="_blank" class="text-sky-500 hover:text-sky-400 font-bold text-xs"><i class="fa-brands fa-telegram"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Announcements -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-bullhorn text-teal-800"></i> Campus Notice
+        </h4>
+        <p class="text-xs text-gray-600 leading-relaxed">
+          Welcome all incoming high school graduates and university students to the ACE-USF online community platform!
+        </p>
+      </div>
+
+    </aside>
+
+    <!-- MIDDLE CONTENT: Feature Navigation Cards & Forum Feed (6 Cols) -->
+    <section id="forum-section" class="lg:col-span-6 space-y-6">
+
+      <!-- FEATURE NAVIGATION GRID -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- Feature Card 1: Nearest Apostolic Church Locator -->
+        <div id="church-locator-card" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5 hover:border-teal-300 transition group cursor-pointer" onclick="alert('Nearest Church Locator feature will search local Apostolic fellowship locations near your campus!')">
+          <div class="w-10 h-10 rounded-xl bg-teal-800 text-amber-400 flex items-center justify-center text-lg font-bold shadow-xs group-hover:scale-105 transition">
+            <i class="fa-solid fa-location-dot"></i>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-gray-900 group-hover:text-teal-800">Nearest Apostolic Church Locator</h3>
+            <p class="text-[11px] text-gray-500 mt-1 leading-snug">Locate local Apostolic Church fellowships & worship centers near your university campus.</p>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-teal-800 pt-1">
+            Find Nearby Church <i class="fa-solid fa-arrow-right text-[9px]"></i>
+          </span>
+        </div>
+
+        <!-- Feature Card 2: Fellow Students Directory & Stats -->
+        <div id="students-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5 hover:border-amber-400 transition group cursor-pointer" onclick="alert('Student Directory will show connected fellowship members across 40+ Ethiopian campuses!')">
+          <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-lg font-bold shadow-xs group-hover:scale-105 transition">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-gray-900 group-hover:text-teal-800">Fellow Students Network</h3>
+            <p class="text-[11px] text-gray-500 mt-1 leading-snug">Connect with 1,200+ Apostolic students and fellowship alumni across Ethiopian campuses.</p>
+          </div>
+          <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 pt-1">
+            View Student Network <i class="fa-solid fa-arrow-right text-[9px]"></i>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Interactive Scripture Banner -->
+      <div class="bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-slate-950 p-6 rounded-2xl shadow-md space-y-3 relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-6 text-amber-400/20 text-9xl pointer-events-none">
+          <i class="fa-solid fa-quote-right"></i>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="bg-slate-950 text-amber-400 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+            Scripture of the Week
+          </span>
+          <span class="text-xs font-bold text-slate-900">Ephesians 4:5</span>
+        </div>
+        <p class="text-sm sm:text-base font-bold italic leading-snug">
+          "One Lord, one faith, one baptism; One God and Father of all, who is above all, and through all, and in you all."
+        </p>
+        <div class="pt-1 flex items-center justify-between text-xs font-semibold">
+          <span class="text-slate-900/80">ACE-USF Weekly Campus Devotional</span>
+          <button type="button" class="bg-slate-950 text-white hover:bg-slate-800 px-3 py-1 rounded-lg text-[11px] transition shadow-xs flex items-center gap-1">
+            <i class="fa-solid fa-share-nodes"></i> Share
+          </button>
+        </div>
+      </div>
+      
+      <!-- Forum Post Creation Card (Visible when Logged In) -->
+      <div id="post-creation-card" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 hidden">
+        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-teal-800"></i> Share with Fellow Campus Believers
+        </h3>
+        <textarea id="post-content" rows="3" placeholder="Share a testimony, prayer request, or encouragement with fellow university students..." class="w-full p-3 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-teal-700 outline-none resize-none bg-gray-50/50 focus:bg-white transition"></textarea>
+        
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <select id="post-category" class="p-2 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 bg-white outline-none">
+            <option value="Academic & Campus Advice">Academic & Campus Advice</option>
+            <option value="Prayer Request">Prayer Request</option>
+            <option value="Testimony">Testimony</option>
+            <option value="Fellowship News">Fellowship News</option>
+          </select>
+
+          <button id="submit-post" type="button" class="bg-teal-800 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-paper-plane"></i> Publish Post
+          </button>
+        </div>
+      </div>
+
+      <!-- Guest Prompt Banner (Visible when Logged Out) -->
+      <div id="login-to-post-prompt" class="bg-teal-50 border border-teal-200 p-4 rounded-xl text-center space-y-2">
+        <p class="text-xs text-teal-900 font-semibold">
+          Want to share a testimony or post a prayer request? Click <button type="button" id="prompt-signin-link" class="underline font-bold text-teal-950">Sign In</button> in the header to access your account!
+        </p>
+      </div>
+
+      <!-- Forum Feed Header & Filter Tabs -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-2 border-b border-gray-100 pb-3">
+          <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+            <i class="fa-solid fa-comments text-teal-800"></i> Fellowship Discussions
+          </h3>
+          <span class="text-[11px] text-teal-800 bg-teal-50 border border-teal-200 font-semibold px-2.5 py-0.5 rounded-full">
+            ● Live Feed
+          </span>
+        </div>
+
+        <!-- Filter Tags -->
+        <div class="flex flex-wrap gap-2 text-[11px] font-semibold text-gray-600">
+          <button type="button" class="px-3 py-1 bg-teal-800 text-white rounded-full">All Discussions</button>
+          <button type="button" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition">Testimonies</button>
+          <button type="button" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition">Prayer Requests</button>
+          <button type="button" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full transition">Campus Advice</button>
+        </div>
+
+        <div id="forum-feed" class="space-y-3 pt-2">
+          <!-- Dynamic posts render here via js/app.js -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR: Campus Weather & Pastoral Media Archive (3 Cols) -->
+    <aside class="lg:col-span-3 space-y-6">
+      
+      <!-- Live Campus Weather Widget -->
+      <div id="weather-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-gray-800 flex items-center gap-2 uppercase tracking-wider">
+            <i class="fa-solid fa-cloud-sun text-amber-500"></i> Campus Weather
+          </h3>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-semibold text-gray-500 mb-1">Select Campus:</label>
+          <select id="weather-uni-select" class="w-full p-2 border border-gray-200 rounded-lg text-xs font-medium text-gray-700 bg-gray-50 focus:bg-white outline-none">
+            <option value="aau">Addis Ababa (AAU / St. Mary's / Unity)</option>
+            <option value="astu">Adama (ASTU / Rift Valley)</option>
+            <option value="aastu">Addis Ababa Science & Tech (AASTU)</option>
+            <option value="hawassa">Hawassa</option>
+            <option value="jimma">Jimma</option>
+            <option value="bahirdar">Bahir Dar</option>
+            <option value="gondar">Gondar</option>
+            <option value="mekelle">Mekelle</option>
+            <option value="hramaya">Haramaya / Dire Dawa</option>
+            <option value="arba_minch">Arba Minch</option>
+            <option value="dilla">Dilla</option>
+            <option value="wollo">Dessie / Wollo</option>
+            <option value="debre_markos">Debre Markos</option>
+            <option value="debre_birhan">Debre Berhan</option>
+            <option value="diredawa">Dire Dawa</option>
+            <option value="jigjiga">Jigjiga</option>
+            <option value="semera">Samara (Afar)</option>
+            <option value="assosa">Assosa</option>
+            <option value="gambella">Gambella</option>
+          </select>
+        </div>
+
+        <!-- Weather Display Card -->
+        <div class="p-3.5 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl border border-teal-100 flex items-center justify-between">
+          <div>
+            <h4 id="weather-city" class="text-xs font-bold text-teal-900">Addis Ababa</h4>
+            <p id="weather-desc" class="text-[11px] text-gray-500 capitalize">Clear Sky</p>
+            <span id="weather-temp" class="text-xl font-extrabold text-slate-900 mt-0.5 block">--°C</span>
+          </div>
+          <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon" class="w-10 h-10" />
+        </div>
+      </div>
+
+      <!-- Pastoral Teachings -->
+      <div id="sermons-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <h3 class="text-xs font-bold text-gray-800 flex items-center gap-2 uppercase tracking-wider">
+          <i class="fa-solid fa-podcast text-teal-800"></i> Pastoral Teachings
+        </h3>
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Stream weekly campus devotionals, audio teachings on Apostolic doctrine, and fellowship songs.
+        </p>
+        <button type="button" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm">
+          Browse Audio Archive
+        </button>
+      </div>
+
+      <!-- Upcoming Events Card -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <h3 class="text-xs font-bold text-gray-800 flex items-center gap-2 uppercase tracking-wider">
+          <i class="fa-solid fa-calendar-days text-amber-500"></i> Upcoming Events
+        </h3>
+        <div class="space-y-2 text-xs border-l-2 border-teal-800 pl-3 py-1">
+          <p class="font-bold text-slate-800">National Inter-Campus Fellowship Conference</p>
+          <p class="text-[10px] text-gray-500"><i class="fa-regular fa-clock"></i> Coming Soon across Campuses</p>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- AUTHENTICATION MODAL POPUP -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-md w-full overflow-hidden transition-all">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center gap-2 text-sm font-bold">
+          <i class="fa-solid fa-shield-halved text-amber-400"></i>
+          <span>ACE-USF Portal Authentication</span>
+        </div>
+        <button id="close-modal-btn" type="button" class="text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Google Sign-In Option -->
+        <button id="google-auth-btn" type="button" class="w-full bg-white hover:bg-gray-50 text-gray-800 font-bold py-2.5 px-4 border border-gray-200 rounded-xl text-xs flex items-center justify-center gap-3 shadow-xs transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Continue with Google
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-gray-200"></div>
+          <span class="flex-shrink mx-3 text-[10px] text-gray-400 font-bold uppercase">or email login</span>
+          <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        <!-- Tab Selector -->
+        <div class="flex border-b border-gray-100 text-xs font-bold text-center bg-gray-50 rounded-lg p-1">
+          <button id="modal-tab-login" type="button" class="flex-1 py-1.5 text-teal-900 bg-white shadow-xs rounded-md transition font-bold">Sign In</button>
+          <button id="modal-tab-register" type="button" class="flex-1 py-1.5 text-gray-400 hover:text-gray-600 transition font-bold">Create Account</button>
+        </div>
+
+        <!-- Modal Login Form -->
+        <form id="modal-login-form" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Campus Email</label>
+            <input type="email" id="modal-login-email" required placeholder="student@campus.edu.et" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Password</label>
+            <input type="password" id="modal-login-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <p id="modal-login-error" class="text-[11px] text-red-500 font-semibold"></p>
+          <button type="submit" class="w-full bg-teal-800 hover:bg-teal-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow">
+            Sign In to Account
+          </button>
+        </form>
+
+        <!-- Modal Register Form -->
+        <form id="modal-register-form" class="space-y-3 hidden">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Full Name</label>
+            <input type="text" id="modal-reg-fullname" required placeholder="Abebe Bikila" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Campus Email</label>
+            <input type="email" id="modal-reg-email" required placeholder="student@campus.edu.et" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Campus University / College</label>
+            <select id="modal-reg-campus" required class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50 text-gray-700">
+              <option value="" disabled selected>Select university or college...</option>
+              <option value="AAU">Addis Ababa University (AAU)</option>
+              <option value="ASTU">Adama Science & Tech (ASTU)</option>
+              <option value="AASTU">Addis Ababa Science & Tech (AASTU)</option>
+              <option value="Hawassa">Hawassa University</option>
+              <option value="Jimma">Jimma University</option>
+              <option value="Bahir Dar">Bahir Dar University</option>
+              <option value="Gondar">University of Gondar</option>
+              <option value="Mekelle">Mekelle University</option>
+              <option value="St. Mary">St. Mary's University</option>
+              <option value="Rift Valley">Rift Valley University</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Password (min 6 chars)</label>
+            <input type="password" id="modal-reg-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1">Confirm Password</label>
+            <input type="password" id="modal-reg-confirm" required placeholder="••••••••" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
+          </div>
+          <p id="modal-reg-error" class="text-[11px] text-red-500 font-semibold"></p>
+          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition shadow">
+            Register Account
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- STANDARDIZED FOOTER SECTION -->
+  <footer class="bg-slate-900 text-slate-200 text-xs mt-12 border-t border-slate-800 py-10">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="space-y-3">
+        <div class="flex items-center space-x-2">
+          <div class="bg-amber-500 text-slate-950 font-bold w-7 h-7 rounded-lg flex items-center justify-center">
+            <i class="fa-solid fa-cross"></i>
+          </div>
+          <span class="font-extrabold text-white text-sm">ACE-USF Portal</span>
+        </div>
+        <p class="text-slate-300 leading-relaxed text-[11px]">
+          Apostolic Church of Ethiopia University Students Fellowship. Connecting, supporting, and building spiritual foundations for higher education students across Ethiopia.
+        </p>
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Quick Links</h4>
+        <ul class="space-y-2 text-[11px] text-slate-300">
+          <li><a href="#" class="hover:text-amber-400 transition">Home Portal</a></li>
+          <li><a href="#about-section" class="hover:text-amber-400 transition">About ACE-USF</a></li>
+          <li><a href="#forum-section" class="hover:text-amber-400 transition">Student Forum & Prayers</a></li>
+          <li><a href="#weather-section" class="hover:text-amber-400 transition">Campus Weather Updates</a></li>
+        </ul>
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Campus Networks</h4>
+        <ul class="space-y-2 text-[11px] text-slate-300">
+          <li><a href="#" class="hover:text-amber-400 transition">Addis Ababa & Central Institutions</a></li>
+          <li><a href="#" class="hover:text-amber-400 transition">Oromia Campus Fellowships</a></li>
+          <li><a href="#" class="hover:text-amber-400 transition">Amhara Regional Campuses</a></li>
+          <li><a href="#" class="hover:text-amber-400 transition">Sidama & South Fellowships</a></li>
+          <li><a href="#" class="hover:text-amber-400 transition">Tigray, Eastern & Private Colleges</a></li>
+        </ul>
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Connect With Us</h4>
+        <p class="text-[11px] text-slate-300">Join our official communication channels for weekly devotionals and national fellowship updates.</p>
+        <div class="flex items-center space-x-3 pt-1">
+          <a href="https://t.me" target="_blank" class="bg-slate-800 hover:bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
+            <i class="fa-brands fa-telegram"></i>
+          </a>
+          <a href="#" class="bg-slate-800 hover:bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
+            <i class="fa-brands fa-youtube"></i>
+          </a>
+          <a href="mailto:info@aceusf.org" class="bg-slate-800 hover:bg-teal-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
+            <i class="fa-solid fa-envelope"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-3">
+      <p>© 2026 Apostolic Church of Ethiopia University Students Fellowship (ACE-USF). All rights reserved.</p>
+      <div class="flex space-x-4">
+        <a href="#" class="hover:text-slate-200 transition">Privacy Policy</a>
+        <a href="#" class="hover:text-slate-200 transition">Terms of Service</a>
+        <a href="#" class="hover:text-slate-200 transition">Contact Admin</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main Application Script -->
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
