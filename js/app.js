@@ -1,7 +1,9 @@
-// js/app.js - Master Controller for ACE-USF Portal
-
+// js/app.js - Master Interactive Controller for ACE-USF Portal
 import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
-
+import { renderChurchList } from "./church_locator.js";
+import { populateInstitutionSelect } from "./institutions.js";
+import { populateDepartmentSelect } from "./academic_data.js";
+import { renderSpiritualRoom, renderAcademicRoom } from "./library_service.js";
 // Database store for registered accounts
 const userDatabase = new Map();
 
@@ -24,18 +26,31 @@ const i18n = {
     library: "ሐዋርያዊ ቤተ-መጻሕፍት",
     signIn: "ግባ / ተመዝገብ",
     heroTitle: "የኢትዮጵያ ሐዋርያዊት ቤተ ክርስቲያን የዩኒቨርሲቲ ተማሪዎች ሕብረት",
-    heroDesc: "በኢትዮጵያ ውስጥ በሚገኙ ከፍተኛ ትምህርት ተቋማት የሚማሩ ሐዋርያውያን ተማሪዎችን መንፈሳዊ እድገት፣ አምልኮ እና ትምህርት የሚያስተናግድ ማህበረሰብ።"
+    heroDesc: "በኢትዮጵያ ውስጥ በሚገኙ ከፍተኛ ትምህርት ተቋማት የሚማሩ ሐዋርያውያን ተማሪዎችን መንፈሳዊ እድገት፣ አምልኮ እና ትምህርት የሚያስተናድድ ማህበረሰብ።"
   }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 ACE-USF Portal Controller Active...");
+  setupCampusNetwork();
+
+  // Populate all university/college dropdowns from js/institutions.js
+  populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
+  populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
+  populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+  
+  // 1. Populate the Senior Academic Departments dropdown
+  populateDepartmentSelect("library-dept-select");
 
   setupWeatherService();
   setupLanguageSwitcher();
   setupAuthModal();
   setupUserDropdownToggle();
+  setupChurchLocatorModal();
   setupForumFeed();
+  
+  // 2. Initialize the Library Modal event listeners
+  setupLibraryModal();
 });
 
 /**
@@ -86,7 +101,6 @@ function switchLanguage(lang) {
     enBtn.className = "px-2 py-0.5 rounded-md text-slate-300 hover:text-white transition font-bold";
   }
 
-  // Update Navigation Labels
   document.querySelectorAll(".lang-text-home").forEach(el => el.textContent = t.home);
   document.querySelectorAll(".lang-text-network").forEach(el => el.textContent = t.network);
   document.querySelectorAll(".lang-text-library").forEach(el => el.textContent = t.library);
@@ -99,6 +113,34 @@ function switchLanguage(lang) {
 
   if (heroTitle) heroTitle.textContent = t.heroTitle;
   if (heroDesc) heroDesc.textContent = t.heroDesc;
+}
+
+/**
+ * Church Locator Modal Handler
+ */
+function setupChurchLocatorModal() {
+  const locatorCard = document.getElementById("church-locator-card");
+  const churchModal = document.getElementById("church-modal");
+  const closeBtn = document.getElementById("close-church-modal-btn");
+  const selectElement = document.getElementById("locator-campus-select");
+  const resultsContainer = document.getElementById("church-results-container");
+
+  if (locatorCard && churchModal) {
+    locatorCard.onclick = () => {
+      churchModal.classList.remove("hidden");
+      renderChurchList(selectElement?.value || "aau", resultsContainer);
+    };
+  }
+
+  if (closeBtn && churchModal) {
+    closeBtn.onclick = () => churchModal.classList.add("hidden");
+  }
+
+  if (selectElement && resultsContainer) {
+    selectElement.onchange = (e) => {
+      renderChurchList(e.target.value, resultsContainer);
+    };
+  }
 }
 
 /**
@@ -128,7 +170,6 @@ function setupAuthModal() {
     closeModalBtn.onclick = () => modal.classList.add("hidden");
   }
 
-  // Tab Switcher inside Modal
   if (tabLogin && tabRegister) {
     tabLogin.onclick = () => {
       tabLogin.className = "flex-1 py-1.5 text-teal-900 bg-white shadow-xs rounded-md transition font-bold";
@@ -145,7 +186,6 @@ function setupAuthModal() {
     };
   }
 
-  // Google Sign In
   if (googleBtn) {
     googleBtn.onclick = () => {
       const simulatedGoogleUser = {
@@ -159,14 +199,13 @@ function setupAuthModal() {
     };
   }
 
-  // Register Submit Handler
   if (registerForm) {
     registerForm.onsubmit = (e) => {
       e.preventDefault();
       const name = document.getElementById("modal-reg-fullname").value.trim();
       const email = document.getElementById("modal-reg-email").value.trim().toLowerCase();
       const campusSelect = document.getElementById("modal-reg-campus");
-      const campus = campusSelect ? campusSelect.options[campusSelect.selectedIndex].text : "Campus Fellow";
+      const campus = campusSelect && campusSelect.selectedIndex >= 0 ? campusSelect.options[campusSelect.selectedIndex].text : "Campus Fellow";
       const pass = document.getElementById("modal-reg-password").value;
       const confirm = document.getElementById("modal-reg-confirm").value;
 
@@ -188,7 +227,6 @@ function setupAuthModal() {
     };
   }
 
-  // Strict Login Submit Handler
   if (loginForm) {
     loginForm.onsubmit = (e) => {
       e.preventDefault();
@@ -213,7 +251,7 @@ function setupAuthModal() {
 }
 
 /**
- * Account Menu Dropdown Handler (Prevents Accidental Sign-Out)
+ * Account Menu Dropdown Handler
  */
 function setupUserDropdownToggle() {
   const trigger = document.getElementById("user-menu-trigger");
@@ -226,7 +264,6 @@ function setupUserDropdownToggle() {
       menu.classList.toggle("hidden");
     };
 
-    // Close menu when clicking anywhere outside
     document.addEventListener("click", (e) => {
       if (!menu.contains(e.target) && !trigger.contains(e.target)) {
         menu.classList.add("hidden");
@@ -379,4 +416,210 @@ function renderSamplePosts(container) {
   ];
 
   container.innerHTML = samplePosts.map(post => createPostCard(post)).join("");
+}
+/**
+ * Dual-Room Library Modal Controller (Spiritual vs Academic)
+ */
+function setupLibraryModal() {
+  let activeRoom = "spiritual";
+  let activeSpiritualCat = "all";
+  let currentLevel = localStorage.getItem("ace_user_level") || "freshman";
+  let currentStream = localStorage.getItem("ace_user_stream") || "natural";
+  let currentDept = localStorage.getItem("ace_user_dept") || "med";
+  let searchQuery = "";
+
+  const spiritualTab = document.getElementById("room-tab-spiritual");
+  const academicTab = document.getElementById("room-tab-academic");
+  const spiritualControls = document.getElementById("spiritual-controls");
+  const academicControls = document.getElementById("academic-controls");
+
+  const levelBtns = document.querySelectorAll(".level-btn");
+  const freshmanBox = document.getElementById("freshman-stream-box");
+  const seniorBox = document.getElementById("senior-dept-box");
+  const streamBtns = document.querySelectorAll(".stream-btn");
+  const deptSelect = document.getElementById("library-dept-select");
+  const searchInput = document.getElementById("library-search-input");
+  const resultsContainer = document.getElementById("library-results-container");
+
+  const libraryModal = document.getElementById("library-modal");
+  const closeBtn = document.getElementById("close-library-modal-btn");
+  const libNavBtns = document.querySelectorAll(".lang-text-library");
+
+  if (deptSelect && currentDept) {
+    deptSelect.value = currentDept;
+  }
+
+  const refreshRoom = () => {
+    if (!resultsContainer) return;
+
+    if (activeRoom === "spiritual") {
+      if (spiritualTab) spiritualTab.className = "px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow-xs";
+      if (academicTab) academicTab.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5 font-bold";
+      if (spiritualControls) spiritualControls.classList.remove("hidden");
+      if (academicControls) academicControls.classList.add("hidden");
+
+      renderSpiritualRoom(resultsContainer, activeSpiritualCat, searchQuery);
+
+      document.querySelectorAll(".sp-cat-pill").forEach(pill => {
+        pill.onclick = (e) => {
+          const btn = e.target.closest(".sp-cat-pill");
+          if (btn) {
+            activeSpiritualCat = btn.getAttribute("data-cat") || "all";
+            refreshRoom();
+          }
+        };
+      });
+    } else {
+      if (academicTab) academicTab.className = "px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow-xs";
+      if (spiritualTab) spiritualTab.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5 font-bold";
+      if (spiritualControls) spiritualControls.classList.add("hidden");
+      if (academicControls) academicControls.classList.remove("hidden");
+
+      if (freshmanBox && seniorBox) {
+        if (currentLevel === "freshman") {
+          freshmanBox.classList.remove("hidden");
+          seniorBox.classList.add("hidden");
+        } else {
+          freshmanBox.classList.add("hidden");
+          seniorBox.classList.remove("hidden");
+        }
+      }
+
+      renderAcademicRoom({
+        level: currentLevel,
+        stream: currentStream,
+        deptId: currentDept,
+        searchQuery: searchQuery,
+        container: resultsContainer
+      });
+    }
+  };
+
+  if (spiritualTab) {
+    spiritualTab.onclick = () => {
+      activeRoom = "spiritual";
+      refreshRoom();
+    };
+  }
+  if (academicTab) {
+    academicTab.onclick = () => {
+      activeRoom = "academic";
+      refreshRoom();
+    };
+  }
+
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      refreshRoom();
+    };
+  }
+
+  levelBtns.forEach(btn => {
+    btn.onclick = () => {
+      levelBtns.forEach(b => b.className = "level-btn py-2 px-2.5 rounded-xl border border-gray-200 bg-white text-slate-700 hover:border-teal-300 font-bold");
+      btn.className = "level-btn py-2 px-2.5 rounded-xl border border-teal-700 bg-teal-800 text-amber-400 font-bold shadow-xs";
+      currentLevel = btn.getAttribute("data-level") || "freshman";
+      localStorage.setItem("ace_user_level", currentLevel);
+      refreshRoom();
+    };
+  });
+
+  streamBtns.forEach(sBtn => {
+    sBtn.onclick = () => {
+      streamBtns.forEach(b => b.className = "stream-btn flex-1 py-1.5 px-3 rounded-lg bg-gray-100 text-slate-600 hover:bg-gray-200 font-bold");
+      sBtn.className = "stream-btn flex-1 py-1.5 px-3 rounded-lg bg-teal-800 text-amber-400 font-bold shadow-xs";
+      currentStream = sBtn.getAttribute("data-stream") || "natural";
+      localStorage.setItem("ace_user_stream", currentStream);
+      refreshRoom();
+    };
+  });
+
+  if (deptSelect) {
+    deptSelect.onchange = (e) => {
+      currentDept = e.target.value;
+      localStorage.setItem("ace_user_dept", currentDept);
+      refreshRoom();
+    };
+  }
+
+  libNavBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      if (libraryModal) {
+        libraryModal.classList.remove("hidden");
+        refreshRoom();
+      }
+    };
+  });
+
+  if (closeBtn && libraryModal) {
+    closeBtn.onclick = () => libraryModal.classList.add("hidden");
+  }
+}
+/**
+ * Campus Network Directory & Modal Controller
+ */
+function setupCampusNetwork() {
+  const container = document.getElementById("campus-network-grid");
+  const searchInput = document.getElementById("campus-search-input");
+  const regionSelect = document.getElementById("campus-region-select");
+  
+  const modal = document.getElementById("campus-detail-modal");
+  const modalBody = document.getElementById("campus-modal-body");
+  const closeBtn = document.getElementById("close-campus-modal-btn");
+
+  if (!container) return;
+
+  let currentRegion = "all";
+  let currentSearch = "";
+
+  const updateGrid = () => {
+    renderCampusNetwork(container, currentRegion, currentSearch);
+    
+    // Attach click listeners to "View Chapter Details" buttons
+    container.querySelectorAll(".open-campus-modal-btn").forEach(btn => {
+      btn.onclick = () => {
+        const campusId = btn.getAttribute("data-campus-id");
+        if (modal && modalBody) {
+          renderCampusDetailModal(campusId, modalBody);
+          modal.classList.remove("hidden");
+        }
+      };
+    });
+  };
+
+  // Initial render
+  updateGrid();
+
+  // Search filter listener
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      currentSearch = e.target.value.trim().toLowerCase();
+      updateGrid();
+    };
+  }
+
+  // Region filter listener
+  if (regionSelect) {
+    regionSelect.onchange = (e) => {
+      currentRegion = e.target.value;
+      updateGrid();
+    };
+  }
+
+  // Modal close handlers
+  if (closeBtn && modal) {
+    closeBtn.onclick = () => {
+      modal.classList.add("hidden");
+    };
+  }
+
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+      }
+    };
+  }
 }
