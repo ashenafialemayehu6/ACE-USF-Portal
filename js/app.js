@@ -4,6 +4,9 @@ import { renderChurchList } from "./church_locator.js";
 import { populateInstitutionSelect } from "./institutions.js";
 import { populateDepartmentSelect } from "./academic_data.js";
 import { renderSpiritualRoom, renderAcademicRoom } from "./library_service.js";
+import { renderCampusNetworkSection } from './campus_network.js';
+import { renderHomeSection } from './home_service.js';
+import { renderFellowshipLeadersSection } from "./fellowship_leaders.js";
 // Database store for registered accounts
 const userDatabase = new Map();
 
@@ -32,13 +35,35 @@ const i18n = {
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 ACE-USF Portal Controller Active...");
-  setupCampusNetwork();
-
+  
   // Populate all university/college dropdowns from js/institutions.js
   populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
   populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
   populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+
+  // --- Fellowship Leaders Section Route Trigger ---
+const leadersNavBtns = document.querySelectorAll("#nav-leaders, .btn-open-leaders, [href='#leaders-section']");
+leadersNavBtns.forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    safeExecute(() => renderFellowshipLeadersSection("main-content"));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
   
+  // --- Campus Network Section Route Trigger ---
+  const campusNavBtn = document.getElementById("nav-campus-network");
+  if (campusNavBtn) {
+    campusNavBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Renders the Campus Network module into your main content display container
+      renderCampusNetworkSection("main-content");
+      
+      // Smooth scroll back to top of the view
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   // 1. Populate the Senior Academic Departments dropdown
   populateDepartmentSelect("library-dept-select");
 
@@ -280,6 +305,7 @@ function setupUserDropdownToggle() {
  * Update Header User UI State
  */
 function updateAuthUI(user) {
+  currentUser = user;
   const authBtn = document.getElementById("auth-btn");
   const userHeaderProfile = document.getElementById("user-header-profile");
   const headerUserName = document.getElementById("header-user-name");
@@ -294,8 +320,6 @@ function updateAuthUI(user) {
   const postPrompt = document.getElementById("login-to-post-prompt");
 
   if (user) {
-    currentUser = user;
-
     if (authBtn) authBtn.classList.add("hidden");
     if (userHeaderProfile) userHeaderProfile.classList.remove("hidden");
 
@@ -310,8 +334,6 @@ function updateAuthUI(user) {
     if (postBox) postBox.classList.remove("hidden");
     if (postPrompt) postPrompt.classList.add("hidden");
   } else {
-    currentUser = null;
-
     if (authBtn) authBtn.classList.remove("hidden");
     if (userHeaderProfile) userHeaderProfile.classList.add("hidden");
 
@@ -376,7 +398,7 @@ function createPostCard({ author, campus, role, category, content, time }) {
           </div>
           <div>
             <h4 class="text-xs font-bold text-gray-900">${author}</h4>
-            <p class="text-[10px] text-gray-500">${role} • <span class="text-teal-800 font-semibold">${campus}</span></p>
+            <p class="text-[10px] text-gray-500">${role} <span class="text-teal-800 font-semibold">${campus}</span></p>
           </div>
         </div>
         <span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
@@ -417,6 +439,7 @@ function renderSamplePosts(container) {
 
   container.innerHTML = samplePosts.map(post => createPostCard(post)).join("");
 }
+
 /**
  * Dual-Room Library Modal Controller (Spiritual vs Academic)
  */
@@ -557,69 +580,44 @@ function setupLibraryModal() {
     closeBtn.onclick = () => libraryModal.classList.add("hidden");
   }
 }
-/**
- * Campus Network Directory & Modal Controller
- */
-function setupCampusNetwork() {
-  const container = document.getElementById("campus-network-grid");
-  const searchInput = document.getElementById("campus-search-input");
-  const regionSelect = document.getElementById("campus-region-select");
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 ACE-USF Portal Controller Active...");
   
-  const modal = document.getElementById("campus-detail-modal");
-  const modalBody = document.getElementById("campus-modal-body");
-  const closeBtn = document.getElementById("close-campus-modal-btn");
+  // 1. Render the Home section on initial app load
+  renderHomeSection("main-content", currentUser);
 
-  if (!container) return;
-
-  let currentRegion = "all";
-  let currentSearch = "";
-
-  const updateGrid = () => {
-    renderCampusNetwork(container, currentRegion, currentSearch);
-    
-    // Attach click listeners to "View Chapter Details" buttons
-    container.querySelectorAll(".open-campus-modal-btn").forEach(btn => {
-      btn.onclick = () => {
-        const campusId = btn.getAttribute("data-campus-id");
-        if (modal && modalBody) {
-          renderCampusDetailModal(campusId, modalBody);
-          modal.classList.remove("hidden");
-        }
-      };
+  // 2. Home Navigation Click Trigger
+  const homeNavBtns = document.querySelectorAll(".lang-text-home, #nav-home");
+  homeNavBtns.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      renderHomeSection("main-content", currentUser);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
-  };
+  });
 
-  // Initial render
-  updateGrid();
-
-  // Search filter listener
-  if (searchInput) {
-    searchInput.oninput = (e) => {
-      currentSearch = e.target.value.trim().toLowerCase();
-      updateGrid();
-    };
+  // Populate all university/college dropdowns
+  populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
+  populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
+  populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+  
+  // --- Campus Network Section Route Trigger ---
+  const campusNavBtn = document.getElementById("nav-campus-network");
+  if (campusNavBtn) {
+    campusNavBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      renderCampusNetworkSection("main-content");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
-  // Region filter listener
-  if (regionSelect) {
-    regionSelect.onchange = (e) => {
-      currentRegion = e.target.value;
-      updateGrid();
-    };
-  }
+  populateDepartmentSelect("library-dept-select");
 
-  // Modal close handlers
-  if (closeBtn && modal) {
-    closeBtn.onclick = () => {
-      modal.classList.add("hidden");
-    };
-  }
-
-  if (modal) {
-    modal.onclick = (e) => {
-      if (e.target === modal) {
-        modal.classList.add("hidden");
-      }
-    };
-  }
-}
+  setupWeatherService();
+  setupLanguageSwitcher();
+  setupAuthModal();
+  setupUserDropdownToggle();
+  setupChurchLocatorModal();
+  setupForumFeed();
+  setupLibraryModal();
+});
