@@ -6,7 +6,6 @@ import { populateDepartmentSelect } from "./academic_data.js";
 import { renderSpiritualRoom, renderAcademicRoom } from "./library_service.js";
 import { renderCampusNetworkSection } from './campus_network.js';
 import { renderHomeSection } from './home_service.js';
-import { renderFellowshipLeadersSection } from "./fellowship_leaders.js";
 // Database store for registered accounts
 const userDatabase = new Map();
 
@@ -40,16 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
   populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
   populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
   populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
-
-  // --- Fellowship Leaders Section Route Trigger ---
-const leadersNavBtns = document.querySelectorAll("#nav-leaders, .btn-open-leaders, [href='#leaders-section']");
-leadersNavBtns.forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    safeExecute(() => renderFellowshipLeadersSection("main-content"));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-});
   
   // --- Campus Network Section Route Trigger ---
   const campusNavBtn = document.getElementById("nav-campus-network");
