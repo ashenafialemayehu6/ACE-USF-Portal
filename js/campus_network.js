@@ -189,7 +189,7 @@ function saveToLocalStorage() {
 /**
  * Main Render Function with Smooth Auto-Scroll
  */
-export function renderCampusNetworkSection(containerId = "main-content") {
+export function renderCampusNetworkSection(containerId = "app-dashboard") {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -320,6 +320,12 @@ export function renderCampusNetworkSection(containerId = "main-content") {
     </div>
   `;
 
+  // app-dashboard is a 12-column grid on desktop. Make each Campus Network
+  // section span the full row instead of being squeezed into one grid cell.
+  Array.from(container.children).forEach((child) => {
+    child.style.gridColumn = "1 / -1";
+    child.style.minWidth = "0";
+  });
   // Standard smooth scroll execution when rendered
   setTimeout(() => {
     const topAnchor = document.getElementById("campus-network-section-top");
@@ -341,7 +347,7 @@ export function renderCampusNetworkSection(containerId = "main-content") {
 
 function switchTab(tab) {
   activeTab = tab;
-  renderCampusNetworkSection("main-content");
+  renderCampusNetworkSection("app-dashboard");
 }
 
 function renderActiveTabContent() {
@@ -535,6 +541,7 @@ function renderBibleStudiesTab(container) {
                 <span class="text-xs text-amber-600 font-semibold"><i class="fa-solid fa-book-open text-[10px] mr-1"></i> Key Passage: ${plan.scripture}</span>
               </div>
             </div>
+        
 
             <button data-plan-title="${plan.title}" class="btn-join-dept-group w-full py-3.5 bg-slate-900 hover:bg-teal-600 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition flex items-center justify-center gap-2 shadow-md">
               <i class="fa-solid fa-lock text-amber-400"></i> Join Small Group (Registered Members Only)
@@ -779,7 +786,7 @@ function renderPrayerBulletinTab(container) {
  * Chapter Detail Hub View
  */
 function renderChapterHubDetail(campusId) {
-  const container = document.getElementById("main-content");
+  const container = document.getElementById("app-dashboard");
   const campus = campusNetworkData.find((c) => c.id === campusId) || campusNetworkData[0];
   if (!container) return;
 
@@ -802,7 +809,7 @@ function renderChapterHubDetail(campusId) {
     </div>
   `;
 
-  document.getElementById("btn-back-to-hub").onclick = () => renderCampusNetworkSection("main-content");
+  document.getElementById("btn-back-to-hub").onclick = () => renderCampusNetworkSection("app-dashboard");
 }
 
 function attachModalEvents() {

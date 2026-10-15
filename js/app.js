@@ -1,11 +1,13 @@
 // js/app.js - Master Interactive Controller for ACE-USF Portal
+import { renderHomeSection } from './home_service.js';
+import { renderCampusNetworkSection } from './campus_network.js';
 import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
 import { renderChurchList } from "./church_locator.js";
 import { populateInstitutionSelect } from "./institutions.js";
 import { populateDepartmentSelect } from "./academic_data.js";
-import { renderSpiritualRoom, renderAcademicRoom } from "./library_service.js";
-import { renderCampusNetworkSection } from './campus_network.js';
-import { renderHomeSection } from './home_service.js';
+import { renderLibrarySection, setupLibraryModal } from "./library_service.js";
+import { renderFellowshipLeadersSection, setupFellowshipLeadersSection } from "./fellowship_leaders.js";
+import { renderAboutSection } from "./about_service.js";
 // Database store for registered accounts
 const userDatabase = new Map();
 
@@ -34,37 +36,101 @@ const i18n = {
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 ACE-USF Portal Controller Active...");
-  
-  // Populate all university/college dropdowns from js/institutions.js
-  populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
-  populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
-  populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
-  
-  // --- Campus Network Section Route Trigger ---
-  const campusNavBtn = document.getElementById("nav-campus-network");
-  if (campusNavBtn) {
-    campusNavBtn.addEventListener("click", (e) => {
+
+  // Helper for safe module initialization
+  const safeInit = (name, fn) => {
+    try {
+      if (typeof fn === "function") {
+        fn();
+      }
+    } catch (err) {
+      console.warn(`⚠️ [Module Warning]: ${name} failed to initialize.`, err.message);
+    }
+  };
+
+  // 1. Initial Load (Render Home Section)
+  safeInit("Initial Home Render", () => {
+    if (typeof renderHomeSection === "function") {
+      renderHomeSection("app-dashboard");
+    }
+  });
+
+  // 2. Home Navigation Click Binding
+  const homeBtn = document.getElementById("nav-home");
+  if (homeBtn) {
+    homeBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      // Renders the Campus Network module into your main content display container
-      renderCampusNetworkSection("main-content");
-      
-      // Smooth scroll back to top of the view
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      console.log("📍 Navigation: Home clicked");
+      safeInit("Render Home", () => {
+        if (typeof renderHomeSection === "function") {
+          renderHomeSection("app-dashboard");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
     });
   }
 
-  // 1. Populate the Senior Academic Departments dropdown
-  populateDepartmentSelect("library-dept-select");
+  // Delegate section navigation so links rendered later inside dynamic sections work too.
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a, button");
+    if (!link) return;
 
-  setupWeatherService();
-  setupLanguageSwitcher();
-  setupAuthModal();
-  setupUserDropdownToggle();
-  setupChurchLocatorModal();
-  setupForumFeed();
-  
-  // 2. Initialize the Library Modal event listeners
-  setupLibraryModal();
+    if (link.matches("#nav-about, a[href='#about-section'], a[href='#about']")) {
+      event.preventDefault();
+      renderAboutSection("app-dashboard");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches("#nav-campus-network, a[href='#campus-network']")) {
+      event.preventDefault();
+      renderCampusNetworkSection("app-dashboard");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches("a[href='#hubs-section']")) {
+      event.preventDefault();
+      renderFellowshipLeadersSection();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches(".lang-text-library, a[href='#apostolic-library']")) {
+      event.preventDefault();
+      renderLibrarySection();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches("[data-about-action='join']")) {
+      document.getElementById("auth-btn")?.click();
+    }
+  });
+  // 4. Dropdowns & Select Initializers
+  safeInit("Institution Dropdowns", () => {
+    if (typeof populateInstitutionSelect === "function") {
+      populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
+      populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
+      populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+    }
+  });
+
+  safeInit("Academic Departments", () => {
+    if (typeof populateDepartmentSelect === "function") {
+      populateDepartmentSelect("library-dept-select");
+    }
+  });
+
+  // 5. Feature Initializers (Isolated Execution)
+  safeInit("Weather Service", setupWeatherService);
+  safeInit("Language Switcher", setupLanguageSwitcher);
+  safeInit("Auth Modal", setupAuthModal);
+  safeInit("User Dropdown", setupUserDropdownToggle);
+  safeInit("Church Locator", setupChurchLocatorModal);
+  safeInit("Forum Feed", setupForumFeed);
+  safeInit("Library Modal", setupLibraryModal);
+  safeInit("Fellowship Leaders Network", setupFellowshipLeadersSection);
 });
 
 /**
@@ -74,19 +140,24 @@ function setupWeatherService() {
   const weatherSelect = document.getElementById("weather-uni-select");
 
   try {
-    initWeatherWidget();
+    if (typeof initWeatherWidget === "function") {
+      initWeatherWidget();
+    }
   } catch (err) {
     console.warn("Weather widget warning:", err.message);
   }
 
   if (weatherSelect) {
     weatherSelect.addEventListener("change", (e) => {
-      fetchCampusWeather(e.target.value);
+      if (typeof fetchCampusWeather === "function") {
+        fetchCampusWeather(e.target.value);
+      }
     });
-    fetchCampusWeather(weatherSelect.value || "aau");
+    if (typeof fetchCampusWeather === "function") {
+      fetchCampusWeather(weatherSelect.value || "aau");
+    }
   }
 }
-
 /**
  * Language Switcher Handler (English & Amharic)
  */
@@ -103,6 +174,7 @@ function setupLanguageSwitcher() {
 function switchLanguage(lang) {
   currentLanguage = lang;
   const t = i18n[lang];
+  window.dispatchEvent(new CustomEvent("ace:language-change", { detail: { language: lang } }));
 
   const enBtn = document.getElementById("lang-en-btn");
   const amBtn = document.getElementById("lang-am-btn");
@@ -271,23 +343,197 @@ function setupUserDropdownToggle() {
   const trigger = document.getElementById("user-menu-trigger");
   const menu = document.getElementById("user-dropdown-menu");
   const logoutBtn = document.getElementById("header-logout-btn");
+  if (!menu) return;
+
+  if (!document.getElementById("profile-menu-my-profile")) {
+    const signOutArea = logoutBtn?.parentElement;
+    const profileAction = document.createElement("button");
+    profileAction.id = "profile-menu-my-profile";
+    profileAction.type = "button";
+    profileAction.className = "w-full rounded-xl px-3 py-2.5 text-left text-xs font-bold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-600";
+    profileAction.innerHTML = '<i class="fa-regular fa-id-card mr-2 text-teal-700"></i><span>My Profile</span>';
+    signOutArea?.insertAdjacentElement("beforebegin", profileAction);
+    profileAction.addEventListener("click", () => {
+      menu.classList.add("hidden");
+      openUserProfilePanel();
+    });
+  }
 
   if (trigger && menu) {
     trigger.onclick = (e) => {
       e.stopPropagation();
       menu.classList.toggle("hidden");
+      trigger.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
     };
 
     document.addEventListener("click", (e) => {
       if (!menu.contains(e.target) && !trigger.contains(e.target)) {
         menu.classList.add("hidden");
+        trigger.setAttribute("aria-expanded", "false");
       }
     });
   }
 
+  ensureUserProfilePanel();
+  ensurePersonalizedGreeting();
+  window.addEventListener("ace:language-change", () => {
+    if (currentUser) {
+      updatePersonalizedGreeting(currentUser);
+      renderUserProfilePanel();
+    }
+    const label = document.querySelector("#profile-menu-my-profile span");
+    if (label) label.textContent = currentLanguage === "am" ? "የእኔ መገለጫ" : "My Profile";
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && currentUser) updatePersonalizedGreeting(currentUser);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      menu.classList.add("hidden");
+      trigger?.setAttribute("aria-expanded", "false");
+      closeUserProfilePanel();
+    }
+  });
+
   if (logoutBtn) {
     logoutBtn.onclick = handleLogout;
   }
+}
+
+function escapeAccountText(value = "") {
+  return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+}
+
+function ensurePersonalizedGreeting() {
+  let banner = document.getElementById("personalized-greeting");
+  if (banner) return banner;
+  const dashboard = document.getElementById("app-dashboard");
+  if (!dashboard) return null;
+  banner = document.createElement("section");
+  banner.id = "personalized-greeting";
+  banner.className = "hidden mx-auto mb-4 w-full max-w-7xl px-4";
+  banner.innerHTML = '<div class="relative overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-r from-white via-teal-50 to-amber-50 px-5 py-4 shadow-sm sm:px-6"><div aria-hidden="true" class="absolute -right-5 -top-10 h-32 w-32 rounded-full border-[18px] border-teal-100/50"></div><div class="relative"><p id="personalized-greeting-title" class="text-lg font-black text-slate-900 sm:text-xl"></p><p id="personalized-greeting-copy" class="mt-1 text-xs leading-5 text-slate-600 sm:text-sm"></p></div></div>';
+  dashboard.insertAdjacentElement("beforebegin", banner);
+  return banner;
+}
+
+function updatePersonalizedGreeting(user) {
+  const banner = ensurePersonalizedGreeting();
+  if (!banner) return;
+  if (!user) {
+    banner.classList.add("hidden");
+    return;
+  }
+  const hour = new Date().getHours();
+  const firstName = String(user.displayName || "").trim().split(/\s+/)[0];
+  let timeEn = hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : hour >= 17 && hour < 21 ? "Good evening" : "Good night";
+  let timeAm = hour >= 5 && hour < 12 ? "እንደምን አደሩ" : hour >= 12 && hour < 17 ? "እንደምን ዋሉ" : hour >= 17 && hour < 21 ? "እንደምን አመሹ" : "መልካም ምሽት";
+  const greeting = currentLanguage === "am"
+    ? `${timeAm}${firstName ? `፣ ${firstName}` : ""}! ወደ ACE-USF እንኳን ደህና መጡ።`
+    : `${timeEn}${firstName ? `, ${firstName}` : ""}! Welcome back to ACE-USF.`;
+  const copy = currentLanguage === "am"
+    ? "የሕብረት መረጃዎችን ይመልከቱ፣ ከተማሪዎች ጋር ይገናኙ፣ በእምነትና በእውቀት ያድጉ።"
+    : "Continue exploring fellowship resources, connecting with students, and growing in faith and knowledge.";
+  banner.querySelector("#personalized-greeting-title").textContent = greeting;
+  banner.querySelector("#personalized-greeting-copy").textContent = copy;
+  banner.classList.remove("hidden");
+}
+
+function ensureUserProfilePanel() {
+  if (document.getElementById("ace-user-profile-panel")) return;
+  const panel = document.createElement("div");
+  panel.id = "ace-user-profile-panel";
+  panel.className = "fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6";
+  panel.setAttribute("aria-hidden", "true");
+  panel.innerHTML = `
+    <section role="dialog" aria-modal="true" aria-labelledby="ace-profile-title" class="w-full max-w-2xl overflow-hidden rounded-3xl bg-slate-50 shadow-2xl">
+      <header class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900 px-5 py-6 text-white sm:px-8">
+        <div class="absolute -right-8 -top-20 h-52 w-52 rounded-full border-[24px] border-white/5" aria-hidden="true"></div>
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex min-w-0 items-center gap-4"><div id="ace-profile-avatar" class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-amber-200/30 bg-teal-800 text-xl font-black text-amber-300 shadow-lg"></div><div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-[.2em] text-amber-300">ACE-USF · MY ACCOUNT</p><h2 id="ace-profile-title" class="mt-1 truncate text-xl font-black sm:text-2xl"></h2><p id="ace-profile-subtitle" class="mt-1 truncate text-xs text-teal-100"></p></div></div>
+          <button id="ace-profile-close" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-amber-300" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </header>
+      <div class="max-h-[68vh] space-y-5 overflow-y-auto p-5 sm:p-8">
+        <p id="ace-profile-note" class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950"></p>
+        <section><h3 id="ace-personal-heading" class="mb-3 text-xs font-black uppercase tracking-wider text-slate-500"></h3><div id="ace-personal-fields" class="grid gap-3 sm:grid-cols-2"></div></section>
+        <section><h3 id="ace-academic-heading" class="mb-3 text-xs font-black uppercase tracking-wider text-slate-500"></h3><div id="ace-academic-fields" class="grid gap-3 sm:grid-cols-2"></div></section>
+      </div>
+    </section>`;
+  document.body.append(panel);
+  panel.querySelector("#ace-profile-close").addEventListener("click", closeUserProfilePanel);
+  panel.addEventListener("click", event => { if (event.target === panel) closeUserProfilePanel(); });
+}
+
+function profileImageUrl(user) {
+  const value = user?.photoURL || user?.photoUrl || user?.profilePicture || "";
+  if (!String(value).trim()) return "";
+  try {
+    const parsed = new URL(value, window.location.href);
+    return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+  } catch { return ""; }
+}
+
+function userInitials(user) {
+  return String(user?.displayName || "ACE-USF").trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join("");
+}
+
+function renderUserProfilePanel() {
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || !currentUser) return;
+  const user = currentUser;
+  const am = currentLanguage === "am";
+  const missing = am ? "ገና አልተጨመረም" : "Not added yet";
+  const value = (field, aliases = []) => {
+    const keys = [field, ...aliases];
+    for (const key of keys) if (String(user[key] || "").trim()) return String(user[key]).trim();
+    return missing;
+  };
+  const card = (icon, label, content) => `<article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><i class="fa-solid ${icon} text-teal-700"></i>${escapeAccountText(label)}</p><p class="mt-2 break-words text-sm font-bold text-slate-900">${escapeAccountText(content)}</p></article>`;
+  const avatar = panel.querySelector("#ace-profile-avatar");
+  const photo = profileImageUrl(user);
+  avatar.innerHTML = photo ? `<img src="${escapeAccountText(photo)}" alt="" class="h-full w-full object-cover">` : escapeAccountText(userInitials(user));
+  panel.querySelector("#ace-profile-title").textContent = user.displayName || (am ? "የACE-USF አባል" : "ACE-USF member");
+  panel.querySelector("#ace-profile-subtitle").textContent = user.campus || (am ? "ዩኒቨርሲቲ አልተገለጸም" : "University not provided");
+  panel.querySelector("#ace-profile-note").textContent = am
+    ? "ይህ መገለጫ በአሁኑ የድር ጣቢያ ክፍለ-ጊዜ ውስጥ የተገኘውን መረጃ ብቻ ያሳያል። የመገለጫ ማስተካከያ፣ ፎቶ መጫንና የይለፍ ቃል ለውጥ ደህንነቱ የተጠበቀ የመለያ አገልግሎት ሲገናኝ ይከፈታሉ።"
+    : "This profile shows only information available in the current website session. Editing, photo uploads, and password changes need a secure account service before they can be safely enabled.";
+  panel.querySelector("#ace-personal-heading").textContent = am ? "የግል መረጃ" : "Personal information";
+  panel.querySelector("#ace-academic-heading").textContent = am ? "የትምህርትና የሕብረት መረጃ" : "Academic and fellowship information";
+  panel.querySelector("#ace-personal-fields").innerHTML = [
+    card("fa-envelope", am ? "ኢሜይል" : "Email", value("email")),
+    card("fa-brands fa-telegram", "Telegram", value("telegramUsername", ["telegram"]))
+  ].join("");
+  panel.querySelector("#ace-academic-fields").innerHTML = [
+    card("fa-building-columns", am ? "ዩኒቨርሲቲ" : "University", value("campus", ["university"])),
+    card("fa-location-dot", am ? "ከተማ / ግቢ" : "City / campus", value("location", ["city"])),
+    card("fa-graduation-cap", am ? "ዲፓርትመንት" : "Department", value("department")),
+    card("fa-book-open", am ? "የትምህርት ደረጃ" : "Study level", value("academicYear", ["studyLevel", "year"])),
+    card("fa-user-tag", am ? "የACE-USF ሚና" : "ACE-USF role", value("role")),
+    card("fa-circle-info", am ? "አጭር መግቢያ" : "About", value("bio", ["biography"]))
+  ].join("");
+}
+
+function openUserProfilePanel() {
+  ensureUserProfilePanel();
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || !currentUser) return;
+  renderUserProfilePanel();
+  panel.classList.remove("hidden");
+  panel.classList.add("flex");
+  panel.setAttribute("aria-hidden", "false");
+  document.body.classList.add("overflow-hidden");
+  panel.querySelector("#ace-profile-close").focus();
+}
+
+function closeUserProfilePanel() {
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || panel.classList.contains("hidden")) return;
+  panel.classList.add("hidden");
+  panel.classList.remove("flex");
+  panel.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("overflow-hidden");
+  document.getElementById("user-menu-trigger")?.focus();
 }
 
 /**
@@ -312,13 +558,22 @@ function updateAuthUI(user) {
     if (authBtn) authBtn.classList.add("hidden");
     if (userHeaderProfile) userHeaderProfile.classList.remove("hidden");
 
-    if (headerUserName) headerUserName.textContent = user.displayName;
-    if (headerUserCampus) headerUserCampus.textContent = user.campus;
+    if (headerUserName) headerUserName.textContent = user.displayName || "ACE-USF Member";
+    if (headerUserCampus) headerUserCampus.textContent = user.campus || "Campus not added";
 
-    if (dropdownName) dropdownName.textContent = user.displayName;
-    if (dropdownCampus) dropdownCampus.textContent = user.campus;
-    if (dropdownEmail) dropdownEmail.textContent = user.email;
+    if (dropdownName) dropdownName.textContent = user.displayName || "ACE-USF Member";
+    if (dropdownCampus) dropdownCampus.textContent = user.campus || "Campus not added";
+    if (dropdownEmail) dropdownEmail.textContent = user.email || "Email not provided";
     if (dropdownRole) dropdownRole.textContent = user.role || "Fellowship Student";
+    renderAccountAvatars(user);
+    updatePersonalizedGreeting(user);
+    renderUserProfilePanel();
+    const status = document.querySelector("#user-dropdown-menu .text-emerald-700");
+    if (status) {
+      status.classList.remove("text-emerald-700");
+      status.classList.add("text-slate-500");
+      status.innerHTML = `<i class="fa-solid fa-circle-info text-xs"></i> ${currentLanguage === "am" ? "የአሁኑ የድር ጣቢያ ክፍለ-ጊዜ" : "Current website session"}`;
+    }
 
     if (postBox) postBox.classList.remove("hidden");
     if (postPrompt) postPrompt.classList.add("hidden");
@@ -328,11 +583,30 @@ function updateAuthUI(user) {
 
     if (postBox) postBox.classList.add("hidden");
     if (postPrompt) postPrompt.classList.remove("hidden");
+    document.getElementById("user-dropdown-menu")?.classList.add("hidden");
+    document.getElementById("user-menu-trigger")?.setAttribute("aria-expanded", "false");
+    closeUserProfilePanel();
+    updatePersonalizedGreeting(null);
   }
 }
 
+function renderAccountAvatars(user) {
+  const profileBadge = document.querySelector("#user-menu-trigger .w-7.h-7");
+  const dropdownBadge = document.querySelector("#user-dropdown-menu .w-10.h-10");
+  const photo = profileImageUrl(user);
+  const initials = escapeAccountText(userInitials(user));
+  [profileBadge, dropdownBadge].filter(Boolean).forEach((badge, index) => {
+    badge.classList.add("rounded-full", "overflow-hidden");
+    badge.classList.remove("rounded-lg", "rounded-xl");
+    badge.innerHTML = photo
+      ? `<img src="${escapeAccountText(photo)}" alt="" class="h-full w-full object-cover">`
+      : `<span aria-hidden="true">${initials}</span>`;
+    badge.setAttribute("aria-label", `${user?.displayName || "User"} profile`);
+  });
+}
+
 function handleLogout() {
-  currentUser = null;
+  updateAuthUI(null);
   window.location.reload();
 }
 
@@ -429,184 +703,4 @@ function renderSamplePosts(container) {
   container.innerHTML = samplePosts.map(post => createPostCard(post)).join("");
 }
 
-/**
- * Dual-Room Library Modal Controller (Spiritual vs Academic)
- */
-function setupLibraryModal() {
-  let activeRoom = "spiritual";
-  let activeSpiritualCat = "all";
-  let currentLevel = localStorage.getItem("ace_user_level") || "freshman";
-  let currentStream = localStorage.getItem("ace_user_stream") || "natural";
-  let currentDept = localStorage.getItem("ace_user_dept") || "med";
-  let searchQuery = "";
 
-  const spiritualTab = document.getElementById("room-tab-spiritual");
-  const academicTab = document.getElementById("room-tab-academic");
-  const spiritualControls = document.getElementById("spiritual-controls");
-  const academicControls = document.getElementById("academic-controls");
-
-  const levelBtns = document.querySelectorAll(".level-btn");
-  const freshmanBox = document.getElementById("freshman-stream-box");
-  const seniorBox = document.getElementById("senior-dept-box");
-  const streamBtns = document.querySelectorAll(".stream-btn");
-  const deptSelect = document.getElementById("library-dept-select");
-  const searchInput = document.getElementById("library-search-input");
-  const resultsContainer = document.getElementById("library-results-container");
-
-  const libraryModal = document.getElementById("library-modal");
-  const closeBtn = document.getElementById("close-library-modal-btn");
-  const libNavBtns = document.querySelectorAll(".lang-text-library");
-
-  if (deptSelect && currentDept) {
-    deptSelect.value = currentDept;
-  }
-
-  const refreshRoom = () => {
-    if (!resultsContainer) return;
-
-    if (activeRoom === "spiritual") {
-      if (spiritualTab) spiritualTab.className = "px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow-xs";
-      if (academicTab) academicTab.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5 font-bold";
-      if (spiritualControls) spiritualControls.classList.remove("hidden");
-      if (academicControls) academicControls.classList.add("hidden");
-
-      renderSpiritualRoom(resultsContainer, activeSpiritualCat, searchQuery);
-
-      document.querySelectorAll(".sp-cat-pill").forEach(pill => {
-        pill.onclick = (e) => {
-          const btn = e.target.closest(".sp-cat-pill");
-          if (btn) {
-            activeSpiritualCat = btn.getAttribute("data-cat") || "all";
-            refreshRoom();
-          }
-        };
-      });
-    } else {
-      if (academicTab) academicTab.className = "px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition flex items-center gap-1.5 shadow-xs";
-      if (spiritualTab) spiritualTab.className = "px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1.5 font-bold";
-      if (spiritualControls) spiritualControls.classList.add("hidden");
-      if (academicControls) academicControls.classList.remove("hidden");
-
-      if (freshmanBox && seniorBox) {
-        if (currentLevel === "freshman") {
-          freshmanBox.classList.remove("hidden");
-          seniorBox.classList.add("hidden");
-        } else {
-          freshmanBox.classList.add("hidden");
-          seniorBox.classList.remove("hidden");
-        }
-      }
-
-      renderAcademicRoom({
-        level: currentLevel,
-        stream: currentStream,
-        deptId: currentDept,
-        searchQuery: searchQuery,
-        container: resultsContainer
-      });
-    }
-  };
-
-  if (spiritualTab) {
-    spiritualTab.onclick = () => {
-      activeRoom = "spiritual";
-      refreshRoom();
-    };
-  }
-  if (academicTab) {
-    academicTab.onclick = () => {
-      activeRoom = "academic";
-      refreshRoom();
-    };
-  }
-
-  if (searchInput) {
-    searchInput.oninput = (e) => {
-      searchQuery = e.target.value.trim().toLowerCase();
-      refreshRoom();
-    };
-  }
-
-  levelBtns.forEach(btn => {
-    btn.onclick = () => {
-      levelBtns.forEach(b => b.className = "level-btn py-2 px-2.5 rounded-xl border border-gray-200 bg-white text-slate-700 hover:border-teal-300 font-bold");
-      btn.className = "level-btn py-2 px-2.5 rounded-xl border border-teal-700 bg-teal-800 text-amber-400 font-bold shadow-xs";
-      currentLevel = btn.getAttribute("data-level") || "freshman";
-      localStorage.setItem("ace_user_level", currentLevel);
-      refreshRoom();
-    };
-  });
-
-  streamBtns.forEach(sBtn => {
-    sBtn.onclick = () => {
-      streamBtns.forEach(b => b.className = "stream-btn flex-1 py-1.5 px-3 rounded-lg bg-gray-100 text-slate-600 hover:bg-gray-200 font-bold");
-      sBtn.className = "stream-btn flex-1 py-1.5 px-3 rounded-lg bg-teal-800 text-amber-400 font-bold shadow-xs";
-      currentStream = sBtn.getAttribute("data-stream") || "natural";
-      localStorage.setItem("ace_user_stream", currentStream);
-      refreshRoom();
-    };
-  });
-
-  if (deptSelect) {
-    deptSelect.onchange = (e) => {
-      currentDept = e.target.value;
-      localStorage.setItem("ace_user_dept", currentDept);
-      refreshRoom();
-    };
-  }
-
-  libNavBtns.forEach(btn => {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      if (libraryModal) {
-        libraryModal.classList.remove("hidden");
-        refreshRoom();
-      }
-    };
-  });
-
-  if (closeBtn && libraryModal) {
-    closeBtn.onclick = () => libraryModal.classList.add("hidden");
-  }
-}
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 ACE-USF Portal Controller Active...");
-  
-  // 1. Render the Home section on initial app load
-  renderHomeSection("main-content", currentUser);
-
-  // 2. Home Navigation Click Trigger
-  const homeNavBtns = document.querySelectorAll(".lang-text-home, #nav-home");
-  homeNavBtns.forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      renderHomeSection("main-content", currentUser);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  });
-
-  // Populate all university/college dropdowns
-  populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
-  populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
-  populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
-  
-  // --- Campus Network Section Route Trigger ---
-  const campusNavBtn = document.getElementById("nav-campus-network");
-  if (campusNavBtn) {
-    campusNavBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      renderCampusNetworkSection("main-content");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
-  }
-
-  populateDepartmentSelect("library-dept-select");
-
-  setupWeatherService();
-  setupLanguageSwitcher();
-  setupAuthModal();
-  setupUserDropdownToggle();
-  setupChurchLocatorModal();
-  setupForumFeed();
-  setupLibraryModal();
-});
