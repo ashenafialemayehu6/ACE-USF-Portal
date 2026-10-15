@@ -1,114 +1,709 @@
-// ACE-USF About section content and renderer.
-// Keep official wording and values in ABOUT_CONTENT so they are easy to review and update.
-const ABOUT_CONTENT = {
-  values: [
-    { icon: "fa-cross", title: "Faith in God", text: "Keeping our relationship with God and Christian faith at the center of our lives." },
-    { icon: "fa-book-bible", title: "Biblical Foundation", text: "Seeking to understand Scripture and live according to our Apostolic Christian beliefs." },
-    { icon: "fa-people-group", title: "Love and Fellowship", text: "Building relationships through love, unity, respect, and mutual encouragement." },
-    { icon: "fa-scale-balanced", title: "Integrity", text: "Practicing honesty, responsibility, humility, and consistency in our actions." },
-    { icon: "fa-hand-holding-heart", title: "Service", text: "Using our time, knowledge, abilities, and opportunities to serve others." },
-    { icon: "fa-seedling", title: "Growth and Learning", text: "Encouraging spiritual development, intellectual growth, discipline, and lifelong learning." },
-    { icon: "fa-heart", title: "Compassion", text: "Treating people with kindness, understanding, and respect." },
-    { icon: "fa-people-arrows-left-right", title: "Unity in Diversity", text: "Welcoming students across academic disciplines and backgrounds into a respectful fellowship." }
-  ],
-  foundations: [
-    { icon: "fa-book-open", title: "Scripture", text: "Growing in understanding of the Bible and its place in Christian life." },
-    { icon: "fa-hands-praying", title: "Prayer", text: "Making room for prayer, reflection, and dependence on God." },
-    { icon: "fa-person-rays", title: "Character", text: "Seeking to reflect faith through integrity, humility, love, and compassion." }
-  ],
-  studentLife: [
-    { icon: "fa-cross", title: "Faith", text: "Grow spiritually and deepen understanding of Christian beliefs." },
-    { icon: "fa-graduation-cap", title: "Education", text: "Pursue knowledge, curiosity, academic effort, and lifelong learning." },
-    { icon: "fa-seedling", title: "Character", text: "Develop discipline, honesty, responsibility, humility, and compassion." },
-    { icon: "fa-handshake-angle", title: "Service", text: "Use knowledge and abilities to contribute positively to society." }
-  ],
-  opportunities: [
-    { icon: "fa-hands-praying", title: "Prayer and spiritual growth" },
-    { icon: "fa-book-bible", title: "Bible study and scriptural learning" },
-    { icon: "fa-people-group", title: "Fellowship and mutual encouragement" },
-    { icon: "fa-comments", title: "Faith-based discussions" },
-    { icon: "fa-user-graduate", title: "Student support and encouragement" },
-    { icon: "fa-compass", title: "Leadership and personal development" },
-    { icon: "fa-hand-holding-heart", title: "Community service and compassionate action" },
-    { icon: "fa-globe", title: "Interdepartmental and interuniversity fellowship" }
-  ]
+// js/app.js - Master Interactive Controller for ACE-USF Portal
+import { renderHomeSection } from './home_service.js';
+import { renderCampusNetworkSection } from './campus_network.js';
+import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
+import { renderChurchList } from "./church_locator.js";
+import { populateInstitutionSelect } from "./institutions.js";
+import { populateDepartmentSelect } from "./academic_data.js";
+import { renderLibrarySection, setupLibraryModal } from "./library_service.js";
+import { renderFellowshipLeadersSection, setupFellowshipLeadersSection } from "./fellowship_leaders.js";
+// Database store for registered accounts
+const userDatabase = new Map();
+
+let currentUser = null;
+let currentLanguage = "en";
+
+// Amharic Translation Dictionary
+const i18n = {
+  en: {
+    home: "Home",
+    network: "Campus Network",
+    library: "Apostolic Library",
+    signIn: "Sign In",
+    heroTitle: "Apostolic Church of Ethiopia University Students Fellowship",
+    heroDesc: "Uniting and empowering Apostolic students across public and private universities and colleges in Ethiopia through pastoral teachings, spiritual literature, worship networks, and mentorship."
+  },
+  am: {
+    home: "ዋና ገጽ",
+    network: "የካምፓስ አውታረ መረብ",
+    library: "ሐዋርያዊ ቤተ-መጻሕፍት",
+    signIn: "ግባ / ተመዝገብ",
+    heroTitle: "የኢትዮጵያ ሐዋርያዊት ቤተ ክርስቲያን የዩኒቨርሲቲ ተማሪዎች ሕብረት",
+    heroDesc: "በኢትዮጵያ ውስጥ በሚገኙ ከፍተኛ ትምህርት ተቋማት የሚማሩ ሐዋርያውያን ተማሪዎችን መንፈሳዊ እድገት፣ አምልኮ እና ትምህርት የሚያስተናድድ ማህበረሰብ።"
+  }
 };
 
-const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-}[character]));
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 ACE-USF Portal Controller Active...");
 
-function renderIconCard(item, style = "") {
-  return `<article class="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-teal-200 hover:shadow-lg ${style}">
-    <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-50 text-lg text-teal-800 transition group-hover:bg-teal-800 group-hover:text-amber-300" aria-hidden="true"><i class="fa-solid ${escapeHtml(item.icon)}"></i></div>
-    <h3 class="text-sm font-extrabold text-slate-900">${escapeHtml(item.title)}</h3>
-    ${item.text ? `<p class="mt-2 text-sm leading-6 text-slate-600">${escapeHtml(item.text)}</p>` : ""}
-  </article>`;
-}
+  // Helper for safe module initialization
+  const safeInit = (name, fn) => {
+    try {
+      if (typeof fn === "function") {
+        fn();
+      }
+    } catch (err) {
+      console.warn(`⚠️ [Module Warning]: ${name} failed to initialize.`, err.message);
+    }
+  };
 
-export function renderAboutSection(targetId = "app-dashboard") {
-  const target = document.getElementById(targetId);
-  if (!target) {
-    console.warn("ACE-USF About section: target container was not found.");
-    return;
+  // 1. Initial Load (Render Home Section)
+  safeInit("Initial Home Render", () => {
+    if (typeof renderHomeSection === "function") {
+      renderHomeSection("app-dashboard");
+    }
+  });
+
+  // 2. Home Navigation Click Binding
+  const homeBtn = document.getElementById("nav-home");
+  if (homeBtn) {
+    homeBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      console.log("📍 Navigation: Home clicked");
+      safeInit("Render Home", () => {
+        if (typeof renderHomeSection === "function") {
+          renderHomeSection("app-dashboard");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+    });
   }
 
-  target.innerHTML = `
-    <div id="ace-about-page" role="region" aria-label="About ACE-USF" class="w-full space-y-7 pb-8 lg:col-span-12">
-      <section aria-labelledby="about-hero-title" class="relative isolate overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-xl sm:px-10 sm:py-14 lg:px-14">
-        <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_20%,rgba(13,148,136,.32),transparent_44%),radial-gradient(ellipse_at_90%_85%,rgba(245,158,11,.18),transparent_38%)]"></div>
-        <div class="absolute -right-16 -top-24 -z-10 h-80 w-80 rounded-full border border-white/10"></div><div class="absolute -right-5 -top-12 -z-10 h-56 w-56 rounded-full border border-white/10"></div>
-        <div class="grid items-center gap-10 lg:grid-cols-[1.15fr_.85fr]">
-          <div class="max-w-3xl">
-            <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-teal-300/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[.18em] text-teal-100"><i class="fa-solid fa-cross text-amber-300" aria-hidden="true"></i> Apostolic Church of Ethiopia University Students Fellowship</p>
-            <h1 id="about-hero-title" class="text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">About <span class="text-amber-300">ACE-USF</span></h1>
-            <p class="mt-5 max-w-2xl text-lg font-semibold leading-8 text-teal-50 sm:text-xl">United in Christ. Growing in Faith. Transforming Campus Life.</p>
-            <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">ACE-USF is a student-centered Christian fellowship focused on faith, spiritual growth, fellowship, encouragement, and service. We seek to help students grow spiritually, strengthen relationships, pursue their studies, and live out their faith throughout university life.</p>
-            <div class="mt-8 flex flex-wrap gap-3">
-              <a href="#campus-network" class="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200 focus:ring-offset-2 focus:ring-offset-slate-950"><i class="fa-solid fa-compass" aria-hidden="true"></i> Explore the campus network</a>
-              <a href="#about-mission" class="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white">Discover our purpose <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>
-            </div>
-          </div>
-          <div class="mx-auto grid w-full max-w-md grid-cols-2 gap-3" aria-label="Four themes of ACE-USF">
-            <div class="flex min-h-36 flex-col justify-between rounded-3xl border border-white/10 bg-white/[.07] p-5 backdrop-blur-sm"><i class="fa-solid fa-cross text-2xl text-amber-300" aria-hidden="true"></i><span class="text-sm font-bold">Faith</span></div>
-            <div class="mt-8 flex min-h-36 flex-col justify-between rounded-3xl border border-white/10 bg-teal-500/15 p-5 backdrop-blur-sm"><i class="fa-solid fa-book-open text-2xl text-teal-200" aria-hidden="true"></i><span class="text-sm font-bold">Learning</span></div>
-            <div class="-mt-8 flex min-h-36 flex-col justify-between rounded-3xl border border-white/10 bg-amber-400/10 p-5 backdrop-blur-sm"><i class="fa-solid fa-people-group text-2xl text-amber-200" aria-hidden="true"></i><span class="text-sm font-bold">Fellowship</span></div>
-            <div class="flex min-h-36 flex-col justify-between rounded-3xl border border-white/10 bg-white/[.07] p-5 backdrop-blur-sm"><i class="fa-solid fa-hand-holding-heart text-2xl text-teal-200" aria-hidden="true"></i><span class="text-sm font-bold">Service</span></div>
-          </div>
+  // Delegate section navigation so links rendered later inside dynamic sections work too.
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a, button");
+    if (!link) return;
+
+    if (link.matches("#nav-about, a[href='#ace-about-section']")) {
+      const template = document.getElementById("ace-about-template");
+      const dashboard = document.getElementById("app-dashboard");
+      if (template && dashboard) {
+        event.preventDefault();
+        dashboard.replaceChildren(template.content.cloneNode(true));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
+
+    if (link.matches("#nav-campus-network, a[href='#campus-network']")) {
+      event.preventDefault();
+      renderCampusNetworkSection("app-dashboard");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches("a[href='#hubs-section']")) {
+      event.preventDefault();
+      renderFellowshipLeadersSection();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches(".lang-text-library, a[href='#apostolic-library']")) {
+      event.preventDefault();
+      renderLibrarySection();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (link.matches("[data-about-action='join']")) {
+      document.getElementById("auth-btn")?.click();
+    }
+  });
+  // 4. Dropdowns & Select Initializers
+  safeInit("Institution Dropdowns", () => {
+    if (typeof populateInstitutionSelect === "function") {
+      populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
+      populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
+      populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+    }
+  });
+
+  safeInit("Academic Departments", () => {
+    if (typeof populateDepartmentSelect === "function") {
+      populateDepartmentSelect("library-dept-select");
+    }
+  });
+
+  // 5. Feature Initializers (Isolated Execution)
+  safeInit("Weather Service", setupWeatherService);
+  safeInit("Language Switcher", setupLanguageSwitcher);
+  safeInit("Auth Modal", setupAuthModal);
+  safeInit("User Dropdown", setupUserDropdownToggle);
+  safeInit("Church Locator", setupChurchLocatorModal);
+  safeInit("Forum Feed", setupForumFeed);
+  safeInit("Library Modal", setupLibraryModal);
+  safeInit("Fellowship Leaders Network", setupFellowshipLeadersSection);
+});
+
+/**
+ * Weather Service Controller
+ */
+function setupWeatherService() {
+  const weatherSelect = document.getElementById("weather-uni-select");
+
+  try {
+    if (typeof initWeatherWidget === "function") {
+      initWeatherWidget();
+    }
+  } catch (err) {
+    console.warn("Weather widget warning:", err.message);
+  }
+
+  if (weatherSelect) {
+    weatherSelect.addEventListener("change", (e) => {
+      if (typeof fetchCampusWeather === "function") {
+        fetchCampusWeather(e.target.value);
+      }
+    });
+    if (typeof fetchCampusWeather === "function") {
+      fetchCampusWeather(weatherSelect.value || "aau");
+    }
+  }
+}
+/**
+ * Language Switcher Handler (English & Amharic)
+ */
+function setupLanguageSwitcher() {
+  const enBtn = document.getElementById("lang-en-btn");
+  const amBtn = document.getElementById("lang-am-btn");
+
+  if (enBtn && amBtn) {
+    enBtn.onclick = () => switchLanguage("en");
+    amBtn.onclick = () => switchLanguage("am");
+  }
+}
+
+function switchLanguage(lang) {
+  currentLanguage = lang;
+  const t = i18n[lang];
+  window.dispatchEvent(new CustomEvent("ace:language-change", { detail: { language: lang } }));
+
+  const enBtn = document.getElementById("lang-en-btn");
+  const amBtn = document.getElementById("lang-am-btn");
+
+  if (lang === "en") {
+    enBtn.className = "px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-bold";
+    amBtn.className = "px-2 py-0.5 rounded-md text-slate-300 hover:text-white transition font-bold";
+  } else {
+    amBtn.className = "px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-bold";
+    enBtn.className = "px-2 py-0.5 rounded-md text-slate-300 hover:text-white transition font-bold";
+  }
+
+  document.querySelectorAll(".lang-text-home").forEach(el => el.textContent = t.home);
+  document.querySelectorAll(".lang-text-network").forEach(el => el.textContent = t.network);
+  document.querySelectorAll(".lang-text-library").forEach(el => el.textContent = t.library);
+
+  const authBtnText = document.getElementById("auth-btn-text");
+  if (authBtnText && !currentUser) authBtnText.textContent = t.signIn;
+
+  const heroTitle = document.getElementById("hero-title");
+  const heroDesc = document.getElementById("hero-desc");
+
+  if (heroTitle) heroTitle.textContent = t.heroTitle;
+  if (heroDesc) heroDesc.textContent = t.heroDesc;
+}
+
+/**
+ * Church Locator Modal Handler
+ */
+function setupChurchLocatorModal() {
+  const locatorCard = document.getElementById("church-locator-card");
+  const churchModal = document.getElementById("church-modal");
+  const closeBtn = document.getElementById("close-church-modal-btn");
+  const selectElement = document.getElementById("locator-campus-select");
+  const resultsContainer = document.getElementById("church-results-container");
+
+  if (locatorCard && churchModal) {
+    locatorCard.onclick = () => {
+      churchModal.classList.remove("hidden");
+      renderChurchList(selectElement?.value || "aau", resultsContainer);
+    };
+  }
+
+  if (closeBtn && churchModal) {
+    closeBtn.onclick = () => churchModal.classList.add("hidden");
+  }
+
+  if (selectElement && resultsContainer) {
+    selectElement.onchange = (e) => {
+      renderChurchList(e.target.value, resultsContainer);
+    };
+  }
+}
+
+/**
+ * Authentication Modal & Form Listeners
+ */
+function setupAuthModal() {
+  const modal = document.getElementById("auth-modal");
+  const authBtn = document.getElementById("auth-btn");
+  const promptBtn = document.getElementById("prompt-signin-link");
+  const closeModalBtn = document.getElementById("close-modal-btn");
+  const tabLogin = document.getElementById("modal-tab-login");
+  const tabRegister = document.getElementById("modal-tab-register");
+  const loginForm = document.getElementById("modal-login-form");
+  const registerForm = document.getElementById("modal-register-form");
+  const loginError = document.getElementById("modal-login-error");
+  const regError = document.getElementById("modal-reg-error");
+  const googleBtn = document.getElementById("google-auth-btn");
+
+  const openModal = () => {
+    if (modal) modal.classList.remove("hidden");
+  };
+
+  if (authBtn) authBtn.onclick = openModal;
+  if (promptBtn) promptBtn.onclick = openModal;
+
+  if (closeModalBtn) {
+    closeModalBtn.onclick = () => modal.classList.add("hidden");
+  }
+
+  if (tabLogin && tabRegister) {
+    tabLogin.onclick = () => {
+      tabLogin.className = "flex-1 py-1.5 text-teal-900 bg-white shadow-xs rounded-md transition font-bold";
+      tabRegister.className = "flex-1 py-1.5 text-gray-400 hover:text-gray-600 transition font-bold";
+      loginForm.classList.remove("hidden");
+      registerForm.classList.add("hidden");
+    };
+
+    tabRegister.onclick = () => {
+      tabRegister.className = "flex-1 py-1.5 text-teal-900 bg-white shadow-xs rounded-md transition font-bold";
+      tabLogin.className = "flex-1 py-1.5 text-gray-400 hover:text-gray-600 transition font-bold";
+      registerForm.classList.remove("hidden");
+      loginForm.classList.add("hidden");
+    };
+  }
+
+  if (googleBtn) {
+    googleBtn.onclick = () => {
+      const simulatedGoogleUser = {
+        displayName: "Apostolic Fellow",
+        email: "student@gmail.com",
+        campus: "Addis Ababa University (AAU)",
+        role: "Fellowship Student"
+      };
+      updateAuthUI(simulatedGoogleUser);
+      modal.classList.add("hidden");
+    };
+  }
+
+  if (registerForm) {
+    registerForm.onsubmit = (e) => {
+      e.preventDefault();
+      const name = document.getElementById("modal-reg-fullname").value.trim();
+      const email = document.getElementById("modal-reg-email").value.trim().toLowerCase();
+      const campusSelect = document.getElementById("modal-reg-campus");
+      const campus = campusSelect && campusSelect.selectedIndex >= 0 ? campusSelect.options[campusSelect.selectedIndex].text : "Campus Fellow";
+      const pass = document.getElementById("modal-reg-password").value;
+      const confirm = document.getElementById("modal-reg-confirm").value;
+
+      if (regError) regError.textContent = "";
+
+      if (pass.length < 6) {
+        if (regError) regError.textContent = "⚠️ Password must be at least 6 characters.";
+        return;
+      }
+      if (pass !== confirm) {
+        if (regError) regError.textContent = "⚠️ Passwords do not match.";
+        return;
+      }
+
+      const newUser = { displayName: name, email, campus, password: pass, role: "Fellowship Student" };
+      userDatabase.set(email, newUser);
+      updateAuthUI(newUser);
+      modal.classList.add("hidden");
+    };
+  }
+
+  if (loginForm) {
+    loginForm.onsubmit = (e) => {
+      e.preventDefault();
+      const email = document.getElementById("modal-login-email").value.trim().toLowerCase();
+      const pass = document.getElementById("modal-login-password").value;
+
+      if (loginError) loginError.textContent = "";
+
+      const user = userDatabase.get(email);
+      if (user) {
+        if (user.password === pass) {
+          updateAuthUI(user);
+          modal.classList.add("hidden");
+        } else {
+          if (loginError) loginError.textContent = "⚠️ Incorrect password. Please try again.";
+        }
+      } else {
+        if (loginError) loginError.textContent = "⚠️ Account not registered yet. Click 'Create Account'.";
+      }
+    };
+  }
+}
+
+/**
+ * Account Menu Dropdown Handler
+ */
+function setupUserDropdownToggle() {
+  const trigger = document.getElementById("user-menu-trigger");
+  const menu = document.getElementById("user-dropdown-menu");
+  const logoutBtn = document.getElementById("header-logout-btn");
+  if (!menu) return;
+
+  if (!document.getElementById("profile-menu-my-profile")) {
+    const signOutArea = logoutBtn?.parentElement;
+    const profileAction = document.createElement("button");
+    profileAction.id = "profile-menu-my-profile";
+    profileAction.type = "button";
+    profileAction.className = "w-full rounded-xl px-3 py-2.5 text-left text-xs font-bold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-600";
+    profileAction.innerHTML = '<i class="fa-regular fa-id-card mr-2 text-teal-700"></i><span>My Profile</span>';
+    signOutArea?.insertAdjacentElement("beforebegin", profileAction);
+    profileAction.addEventListener("click", () => {
+      menu.classList.add("hidden");
+      openUserProfilePanel();
+    });
+  }
+
+  if (trigger && menu) {
+    trigger.onclick = (e) => {
+      e.stopPropagation();
+      menu.classList.toggle("hidden");
+      trigger.setAttribute("aria-expanded", String(!menu.classList.contains("hidden")));
+    };
+
+    document.addEventListener("click", (e) => {
+      if (!menu.contains(e.target) && !trigger.contains(e.target)) {
+        menu.classList.add("hidden");
+        trigger.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  ensureUserProfilePanel();
+  ensurePersonalizedGreeting();
+  window.addEventListener("ace:language-change", () => {
+    if (currentUser) {
+      updatePersonalizedGreeting(currentUser);
+      renderUserProfilePanel();
+    }
+    const label = document.querySelector("#profile-menu-my-profile span");
+    if (label) label.textContent = currentLanguage === "am" ? "የእኔ መገለጫ" : "My Profile";
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && currentUser) updatePersonalizedGreeting(currentUser);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      menu.classList.add("hidden");
+      trigger?.setAttribute("aria-expanded", "false");
+      closeUserProfilePanel();
+    }
+  });
+
+  if (logoutBtn) {
+    logoutBtn.onclick = handleLogout;
+  }
+}
+
+function escapeAccountText(value = "") {
+  return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+}
+
+function ensurePersonalizedGreeting() {
+  let banner = document.getElementById("personalized-greeting");
+  if (banner) return banner;
+  const dashboard = document.getElementById("app-dashboard");
+  if (!dashboard) return null;
+  banner = document.createElement("section");
+  banner.id = "personalized-greeting";
+  banner.className = "hidden mx-auto mb-4 w-full max-w-7xl px-4";
+  banner.innerHTML = '<div class="relative overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-r from-white via-teal-50 to-amber-50 px-5 py-4 shadow-sm sm:px-6"><div aria-hidden="true" class="absolute -right-5 -top-10 h-32 w-32 rounded-full border-[18px] border-teal-100/50"></div><div class="relative"><p id="personalized-greeting-title" class="text-lg font-black text-slate-900 sm:text-xl"></p><p id="personalized-greeting-copy" class="mt-1 text-xs leading-5 text-slate-600 sm:text-sm"></p></div></div>';
+  dashboard.insertAdjacentElement("beforebegin", banner);
+  return banner;
+}
+
+function updatePersonalizedGreeting(user) {
+  const banner = ensurePersonalizedGreeting();
+  if (!banner) return;
+  if (!user) {
+    banner.classList.add("hidden");
+    return;
+  }
+  const hour = new Date().getHours();
+  const firstName = String(user.displayName || "").trim().split(/\s+/)[0];
+  let timeEn = hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : hour >= 17 && hour < 21 ? "Good evening" : "Good night";
+  let timeAm = hour >= 5 && hour < 12 ? "እንደምን አደሩ" : hour >= 12 && hour < 17 ? "እንደምን ዋሉ" : hour >= 17 && hour < 21 ? "እንደምን አመሹ" : "መልካም ምሽት";
+  const greeting = currentLanguage === "am"
+    ? `${timeAm}${firstName ? `፣ ${firstName}` : ""}! ወደ ACE-USF እንኳን ደህና መጡ።`
+    : `${timeEn}${firstName ? `, ${firstName}` : ""}! Welcome back to ACE-USF.`;
+  const copy = currentLanguage === "am"
+    ? "የሕብረት መረጃዎችን ይመልከቱ፣ ከተማሪዎች ጋር ይገናኙ፣ በእምነትና በእውቀት ያድጉ።"
+    : "Continue exploring fellowship resources, connecting with students, and growing in faith and knowledge.";
+  banner.querySelector("#personalized-greeting-title").textContent = greeting;
+  banner.querySelector("#personalized-greeting-copy").textContent = copy;
+  banner.classList.remove("hidden");
+}
+
+function ensureUserProfilePanel() {
+  if (document.getElementById("ace-user-profile-panel")) return;
+  const panel = document.createElement("div");
+  panel.id = "ace-user-profile-panel";
+  panel.className = "fixed inset-0 z-[90] hidden items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-6";
+  panel.setAttribute("aria-hidden", "true");
+  panel.innerHTML = `
+    <section role="dialog" aria-modal="true" aria-labelledby="ace-profile-title" class="w-full max-w-2xl overflow-hidden rounded-3xl bg-slate-50 shadow-2xl">
+      <header class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900 px-5 py-6 text-white sm:px-8">
+        <div class="absolute -right-8 -top-20 h-52 w-52 rounded-full border-[24px] border-white/5" aria-hidden="true"></div>
+        <div class="relative flex items-start justify-between gap-4">
+          <div class="flex min-w-0 items-center gap-4"><div id="ace-profile-avatar" class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-amber-200/30 bg-teal-800 text-xl font-black text-amber-300 shadow-lg"></div><div class="min-w-0"><p class="text-[10px] font-black uppercase tracking-[.2em] text-amber-300">ACE-USF · MY ACCOUNT</p><h2 id="ace-profile-title" class="mt-1 truncate text-xl font-black sm:text-2xl"></h2><p id="ace-profile-subtitle" class="mt-1 truncate text-xs text-teal-100"></p></div></div>
+          <button id="ace-profile-close" type="button" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white transition hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-amber-300" aria-label="Close profile"><i class="fa-solid fa-xmark"></i></button>
         </div>
-      </section>
+      </header>
+      <div class="max-h-[68vh] space-y-5 overflow-y-auto p-5 sm:p-8">
+        <p id="ace-profile-note" class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950"></p>
+        <section><h3 id="ace-personal-heading" class="mb-3 text-xs font-black uppercase tracking-wider text-slate-500"></h3><div id="ace-personal-fields" class="grid gap-3 sm:grid-cols-2"></div></section>
+        <section><h3 id="ace-academic-heading" class="mb-3 text-xs font-black uppercase tracking-wider text-slate-500"></h3><div id="ace-academic-fields" class="grid gap-3 sm:grid-cols-2"></div></section>
+      </div>
+    </section>`;
+  document.body.append(panel);
+  panel.querySelector("#ace-profile-close").addEventListener("click", closeUserProfilePanel);
+  panel.addEventListener("click", event => { if (event.target === panel) closeUserProfilePanel(); });
+}
 
-      <section aria-labelledby="about-who-title" class="grid gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:grid-cols-[.7fr_1.3fr] lg:items-start">
-        <div><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">Our identity</p><h2 id="about-who-title" class="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Who we are</h2></div>
-        <div class="space-y-4 text-sm leading-7 text-slate-600 sm:text-base"><p>ACE-USF brings university students together through Christian faith, spiritual development, fellowship, mutual encouragement, and service. It is a space for students to connect, strengthen their faith, encourage one another through university life, and consider their responsibility to their communities.</p><p>We seek to connect spiritual growth with everyday student life—helping students approach their studies, relationships, personal development, and future responsibilities with faith, integrity, compassion, and purpose.</p></div>
-      </section>
+function profileImageUrl(user) {
+  const value = user?.photoURL || user?.photoUrl || user?.profilePicture || "";
+  if (!String(value).trim()) return "";
+  try {
+    const parsed = new URL(value, window.location.href);
+    return ["http:", "https:"].includes(parsed.protocol) ? parsed.href : "";
+  } catch { return ""; }
+}
 
-      <section id="about-mission" class="grid gap-5 lg:grid-cols-2">
-        <article class="relative overflow-hidden rounded-3xl bg-teal-900 p-7 text-white shadow-lg sm:p-9"><div class="absolute -right-10 -top-14 h-44 w-44 rounded-full border-[22px] border-white/5" aria-hidden="true"></div><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-200">Why we exist</p><h2 class="mt-3 text-2xl font-black">Our mission</h2><p class="relative mt-5 text-base font-medium leading-8 text-teal-50">Our mission is to encourage university students to grow in their Christian faith, strengthen their relationship with God, build meaningful fellowship with one another, and live with integrity, compassion, and a spirit of service throughout their university journey.</p></article>
-        <article class="relative overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-teal-50 p-7 shadow-sm sm:p-9"><div class="absolute -right-12 -bottom-16 h-52 w-52 rounded-full border-[24px] border-teal-900/5" aria-hidden="true"></div><p class="text-[11px] font-black uppercase tracking-[.18em] text-amber-800">The future we hope to build</p><h2 class="mt-3 text-2xl font-black text-slate-950">Our vision</h2><p class="relative mt-5 text-base font-medium leading-8 text-slate-700">To see university students growing in faith, united in Christian fellowship, strengthened in character, and equipped to make a meaningful and positive difference in their campuses, communities, and future professions.</p></article>
-      </section>
+function userInitials(user) {
+  return String(user?.displayName || "ACE-USF").trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join("");
+}
 
-      <section aria-labelledby="about-values-title" class="rounded-3xl bg-slate-100/80 p-6 sm:p-8"><div class="mb-6 max-w-2xl"><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">What guides us</p><h2 id="about-values-title" class="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Our core values</h2><p class="mt-2 text-sm leading-6 text-slate-600">These proposed values are a starting point and can be edited to reflect the fellowship’s officially agreed wording.</p></div><div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">${ABOUT_CONTENT.values.map(item => renderIconCard(item)).join("")}</div></section>
+function renderUserProfilePanel() {
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || !currentUser) return;
+  const user = currentUser;
+  const am = currentLanguage === "am";
+  const missing = am ? "ገና አልተጨመረም" : "Not added yet";
+  const value = (field, aliases = []) => {
+    const keys = [field, ...aliases];
+    for (const key of keys) if (String(user[key] || "").trim()) return String(user[key]).trim();
+    return missing;
+  };
+  const card = (icon, label, content) => `<article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-500"><i class="fa-solid ${icon} text-teal-700"></i>${escapeAccountText(label)}</p><p class="mt-2 break-words text-sm font-bold text-slate-900">${escapeAccountText(content)}</p></article>`;
+  const avatar = panel.querySelector("#ace-profile-avatar");
+  const photo = profileImageUrl(user);
+  avatar.innerHTML = photo ? `<img src="${escapeAccountText(photo)}" alt="" class="h-full w-full object-cover">` : escapeAccountText(userInitials(user));
+  panel.querySelector("#ace-profile-title").textContent = user.displayName || (am ? "የACE-USF አባል" : "ACE-USF member");
+  panel.querySelector("#ace-profile-subtitle").textContent = user.campus || (am ? "ዩኒቨርሲቲ አልተገለጸም" : "University not provided");
+  panel.querySelector("#ace-profile-note").textContent = am
+    ? "ይህ መገለጫ በአሁኑ የድር ጣቢያ ክፍለ-ጊዜ ውስጥ የተገኘውን መረጃ ብቻ ያሳያል። የመገለጫ ማስተካከያ፣ ፎቶ መጫንና የይለፍ ቃል ለውጥ ደህንነቱ የተጠበቀ የመለያ አገልግሎት ሲገናኝ ይከፈታሉ።"
+    : "This profile shows only information available in the current website session. Editing, photo uploads, and password changes need a secure account service before they can be safely enabled.";
+  panel.querySelector("#ace-personal-heading").textContent = am ? "የግል መረጃ" : "Personal information";
+  panel.querySelector("#ace-academic-heading").textContent = am ? "የትምህርትና የሕብረት መረጃ" : "Academic and fellowship information";
+  panel.querySelector("#ace-personal-fields").innerHTML = [
+    card("fa-envelope", am ? "ኢሜይል" : "Email", value("email")),
+    card("fa-brands fa-telegram", "Telegram", value("telegramUsername", ["telegram"]))
+  ].join("");
+  panel.querySelector("#ace-academic-fields").innerHTML = [
+    card("fa-building-columns", am ? "ዩኒቨርሲቲ" : "University", value("campus", ["university"])),
+    card("fa-location-dot", am ? "ከተማ / ግቢ" : "City / campus", value("location", ["city"])),
+    card("fa-graduation-cap", am ? "ዲፓርትመንት" : "Department", value("department")),
+    card("fa-book-open", am ? "የትምህርት ደረጃ" : "Study level", value("academicYear", ["studyLevel", "year"])),
+    card("fa-user-tag", am ? "የACE-USF ሚና" : "ACE-USF role", value("role")),
+    card("fa-circle-info", am ? "አጭር መግቢያ" : "About", value("bio", ["biography"]))
+  ].join("");
+}
 
-      <section class="overflow-hidden rounded-3xl border border-teal-100 bg-white shadow-sm"><div class="grid lg:grid-cols-[.8fr_1.2fr]"><div class="bg-gradient-to-br from-slate-900 via-teal-950 to-teal-900 p-7 text-white sm:p-9"><p class="text-[11px] font-black uppercase tracking-[.18em] text-amber-300">Our faith and foundation</p><h2 class="mt-3 text-2xl font-black">Christ at the center of student life</h2><p class="mt-4 text-sm leading-7 text-teal-50">Our fellowship seeks to place Jesus Christ at the center of student life, encouraging students to grow in their understanding of Scripture, develop a life of prayer, strengthen their Christian character, and support one another in faith.</p></div><div class="grid gap-3 p-5 sm:grid-cols-3 sm:p-7">${ABOUT_CONTENT.foundations.map(item => renderIconCard(item, "border-teal-100")).join("")}</div></div></section>
+function openUserProfilePanel() {
+  ensureUserProfilePanel();
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || !currentUser) return;
+  renderUserProfilePanel();
+  panel.classList.remove("hidden");
+  panel.classList.add("flex");
+  panel.setAttribute("aria-hidden", "false");
+  document.body.classList.add("overflow-hidden");
+  panel.querySelector("#ace-profile-close").focus();
+}
 
-      <section aria-labelledby="about-community-title" class="grid items-center gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:grid-cols-[.8fr_1.2fr]"><div><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">People and belonging</p><h2 id="about-community-title" class="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">A fellowship beyond the classroom</h2></div><div class="space-y-4 text-sm leading-7 text-slate-600 sm:text-base"><p>University life is more than lectures, examinations, and academic achievements. It is also a season of growth, discovery, challenges, and preparation for the future.</p><p>ACE-USF seeks to provide a welcoming environment where students can encourage one another, grow in faith, build meaningful relationships, and pursue their university journeys with a deeper sense of purpose.</p></div></section>
+function closeUserProfilePanel() {
+  const panel = document.getElementById("ace-user-profile-panel");
+  if (!panel || panel.classList.contains("hidden")) return;
+  panel.classList.add("hidden");
+  panel.classList.remove("flex");
+  panel.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("overflow-hidden");
+  document.getElementById("user-menu-trigger")?.focus();
+}
 
-      <section aria-labelledby="about-student-life-title" class="rounded-3xl bg-gradient-to-br from-teal-50 to-white p-6 sm:p-8"><div class="mb-6"><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">Faith and academic purpose</p><h2 id="about-student-life-title" class="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Growing in every part of student life</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Faith, education, character, and service can complement one another. Learning can also prepare us to contribute thoughtfully to the lives of others.</p></div><div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">${ABOUT_CONTENT.studentLife.map(item => renderIconCard(item, "bg-white/90")).join("")}</div></section>
+/**
+ * Update Header User UI State
+ */
+function updateAuthUI(user) {
+  currentUser = user;
+  const authBtn = document.getElementById("auth-btn");
+  const userHeaderProfile = document.getElementById("user-header-profile");
+  const headerUserName = document.getElementById("header-user-name");
+  const headerUserCampus = document.getElementById("header-user-campus");
 
-      <section aria-labelledby="about-opportunities-title" class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><div class="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">Ways students may connect</p><h2 id="about-opportunities-title" class="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Areas of fellowship and growth</h2></div><p class="max-w-md text-xs leading-5 text-slate-500">These are areas of interest, not a published schedule or a promise that each is currently offered.</p></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">${ABOUT_CONTENT.opportunities.map(item => `<div class="flex items-start gap-3 rounded-2xl bg-slate-50 p-4"><i class="fa-solid ${escapeHtml(item.icon)} mt-0.5 text-teal-800" aria-hidden="true"></i><p class="text-sm font-bold leading-5 text-slate-700">${escapeHtml(item.title)}</p></div>`).join("")}</div></section>
+  const dropdownName = document.getElementById("dropdown-full-name");
+  const dropdownCampus = document.getElementById("dropdown-campus");
+  const dropdownEmail = document.getElementById("dropdown-email");
+  const dropdownRole = document.getElementById("dropdown-role");
 
-      <section class="grid items-center gap-5 rounded-3xl border border-amber-200 bg-amber-50/70 p-6 sm:p-8 lg:grid-cols-[1fr_auto]"><div><p class="text-[11px] font-black uppercase tracking-[.18em] text-amber-800">Participation and responsibility</p><h2 class="mt-2 text-2xl font-black text-slate-950">Growing together through service and leadership</h2><p class="mt-3 max-w-3xl text-sm leading-7 text-slate-700">A strong fellowship depends on people who encourage one another, take responsibility, serve faithfully, and contribute their abilities. Explore the leaders and campus contacts listed in the Fellowship Leaders Network.</p></div><a href="#hubs-section" class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700"><i class="fa-solid fa-user-group" aria-hidden="true"></i> Meet fellowship leaders</a></section>
+  const postBox = document.getElementById("post-creation-card");
+  const postPrompt = document.getElementById("login-to-post-prompt");
 
-      <section aria-labelledby="about-digital-title" class="rounded-3xl bg-slate-950 p-6 text-white shadow-lg sm:p-8"><div class="mb-6 max-w-2xl"><p class="text-[11px] font-black uppercase tracking-[.18em] text-amber-300">Our digital fellowship</p><h2 id="about-digital-title" class="mt-2 text-2xl font-black sm:text-3xl">Faith, fellowship, and learning—connected</h2><p class="mt-2 text-sm leading-6 text-slate-300">This website is intended to make fellowship information and digital resources more accessible to students.</p></div><div class="grid gap-4 sm:grid-cols-3"><a href="#apostolic-library" class="group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300"><i class="fa-solid fa-book-bible text-xl text-amber-300" aria-hidden="true"></i><h3 class="mt-3 font-extrabold">Apostolic Digital Library</h3><p class="mt-1 text-xs leading-5 text-slate-300">Open the library rooms and search resources.</p><span class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-amber-200">Explore library <i class="fa-solid fa-arrow-right transition group-hover:translate-x-1" aria-hidden="true"></i></span></a><a href="#campus-network" class="group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300"><i class="fa-solid fa-network-wired text-xl text-teal-200" aria-hidden="true"></i><h3 class="mt-3 font-extrabold">Campus Network</h3><p class="mt-1 text-xs leading-5 text-slate-300">Explore the campus network section.</p><span class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-teal-100">Visit network <i class="fa-solid fa-arrow-right transition group-hover:translate-x-1" aria-hidden="true"></i></span></a><a href="#hubs-section" class="group rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300"><i class="fa-solid fa-people-group text-xl text-amber-200" aria-hidden="true"></i><h3 class="mt-3 font-extrabold">Fellowship Leaders Network</h3><p class="mt-1 text-xs leading-5 text-slate-300">Find the leaders and campus contacts available on the site.</p><span class="mt-4 inline-flex items-center gap-2 text-xs font-bold text-amber-100">Meet leaders <i class="fa-solid fa-arrow-right transition group-hover:translate-x-1" aria-hidden="true"></i></span></a></div></section>
+  if (user) {
+    if (authBtn) authBtn.classList.add("hidden");
+    if (userHeaderProfile) userHeaderProfile.classList.remove("hidden");
 
-      <section class="grid gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:grid-cols-[.8fr_1.2fr]"><div><p class="text-[11px] font-black uppercase tracking-[.18em] text-teal-800">Our commitment to students</p><h2 class="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">A place to grow, connect, and serve</h2></div><p class="text-sm leading-7 text-slate-600 sm:text-base">We believe university life offers opportunities not only to gain knowledge but also to develop character, strengthen relationships, grow spiritually, and discover meaningful ways to serve others. ACE-USF seeks to encourage an environment where students can support one another, pursue spiritual growth, learn together, and approach their responsibilities with integrity and compassion.</p></section>
+    if (headerUserName) headerUserName.textContent = user.displayName || "ACE-USF Member";
+    if (headerUserCampus) headerUserCampus.textContent = user.campus || "Campus not added";
 
-      <section class="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-teal-900 via-slate-900 to-blue-950 px-6 py-9 text-center text-white shadow-xl sm:px-10 sm:py-12"><div class="relative mx-auto max-w-3xl"><p class="text-[11px] font-black uppercase tracking-[.18em] text-amber-300">Your university journey</p><h2 class="mt-3 text-2xl font-black sm:text-4xl">Your university journey can be more meaningful together.</h2><p class="mx-auto mt-4 max-w-2xl text-sm leading-7 text-teal-50">Whether you are beginning university, continuing your studies, exploring your faith, or looking for a community of Christian students, we invite you to learn more about ACE-USF and discover opportunities to grow, connect, and serve.</p><div class="mt-7 flex flex-wrap justify-center gap-3"><a href="#home" id="about-explore-home" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-slate-900 transition hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-white"><i class="fa-solid fa-house" aria-hidden="true"></i> Explore ACE-USF</a><button type="button" data-about-action="join" class="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Join / sign in</button><a href="mailto:info@aceusf.org" class="inline-flex items-center gap-2 rounded-xl border border-white/25 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Contact</a></div></div></section>
-      <p class="px-1 text-center text-[11px] leading-5 text-slate-500">ACE-USF’s mission, vision, and values here are proposed wording for review. Please confirm the final text with the fellowship before treating it as official.</p>
-    </div>`;
-  target.querySelector("#about-explore-home")?.addEventListener("click", event => {
-    event.preventDefault();
-    document.getElementById("nav-home")?.click();
+    if (dropdownName) dropdownName.textContent = user.displayName || "ACE-USF Member";
+    if (dropdownCampus) dropdownCampus.textContent = user.campus || "Campus not added";
+    if (dropdownEmail) dropdownEmail.textContent = user.email || "Email not provided";
+    if (dropdownRole) dropdownRole.textContent = user.role || "Fellowship Student";
+    renderAccountAvatars(user);
+    updatePersonalizedGreeting(user);
+    renderUserProfilePanel();
+    const status = document.querySelector("#user-dropdown-menu .text-emerald-700");
+    if (status) {
+      status.classList.remove("text-emerald-700");
+      status.classList.add("text-slate-500");
+      status.innerHTML = `<i class="fa-solid fa-circle-info text-xs"></i> ${currentLanguage === "am" ? "የአሁኑ የድር ጣቢያ ክፍለ-ጊዜ" : "Current website session"}`;
+    }
+
+    if (postBox) postBox.classList.remove("hidden");
+    if (postPrompt) postPrompt.classList.add("hidden");
+  } else {
+    if (authBtn) authBtn.classList.remove("hidden");
+    if (userHeaderProfile) userHeaderProfile.classList.add("hidden");
+
+    if (postBox) postBox.classList.add("hidden");
+    if (postPrompt) postPrompt.classList.remove("hidden");
+    document.getElementById("user-dropdown-menu")?.classList.add("hidden");
+    document.getElementById("user-menu-trigger")?.setAttribute("aria-expanded", "false");
+    closeUserProfilePanel();
+    updatePersonalizedGreeting(null);
+  }
+}
+
+function renderAccountAvatars(user) {
+  const profileBadge = document.querySelector("#user-menu-trigger .w-7.h-7");
+  const dropdownBadge = document.querySelector("#user-dropdown-menu .w-10.h-10");
+  const photo = profileImageUrl(user);
+  const initials = escapeAccountText(userInitials(user));
+  [profileBadge, dropdownBadge].filter(Boolean).forEach((badge, index) => {
+    badge.classList.add("rounded-full", "overflow-hidden");
+    badge.classList.remove("rounded-lg", "rounded-xl");
+    badge.innerHTML = photo
+      ? `<img src="${escapeAccountText(photo)}" alt="" class="h-full w-full object-cover">`
+      : `<span aria-hidden="true">${initials}</span>`;
+    badge.setAttribute("aria-label", `${user?.displayName || "User"} profile`);
   });
 }
+
+function handleLogout() {
+  updateAuthUI(null);
+  window.location.reload();
+}
+
+/**
+ * Setup Interactive Forum Feed
+ */
+function setupForumFeed() {
+  const submitBtn = document.getElementById("submit-post");
+  const postContent = document.getElementById("post-content");
+  const postCategory = document.getElementById("post-category");
+  const forumFeed = document.getElementById("forum-feed");
+
+  if (forumFeed && forumFeed.children.length === 0) {
+    renderSamplePosts(forumFeed);
+  }
+
+  if (submitBtn && postContent) {
+    submitBtn.onclick = () => {
+      const text = postContent.value.trim();
+      const category = postCategory ? postCategory.value : "General";
+
+      if (!text) {
+        alert("Please enter post content before publishing.");
+        return;
+      }
+
+      const newPostHTML = createPostCard({
+        author: currentUser ? currentUser.displayName : "Fellowship Member",
+        campus: currentUser?.campus || "ACE-USF Campus Network",
+        role: currentUser?.role || "Fellowship Student",
+        category: category,
+        content: text,
+        time: "Just now"
+      });
+
+      if (forumFeed) {
+        forumFeed.insertAdjacentHTML("afterbegin", newPostHTML);
+      }
+
+      postContent.value = "";
+    };
+  }
+}
+
+function createPostCard({ author, campus, role, category, content, time }) {
+  return `
+    <div class="p-4 bg-slate-50 rounded-xl border border-gray-100 space-y-2 hover:border-teal-200 transition">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-full bg-teal-800 text-amber-400 font-bold flex items-center justify-center text-xs shadow-xs">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-900">${author}</h4>
+            <p class="text-[10px] text-gray-500">${role} <span class="text-teal-800 font-semibold">${campus}</span></p>
+          </div>
+        </div>
+        <span class="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+          ${category}
+        </span>
+      </div>
+      <p class="text-xs text-gray-700 leading-relaxed pt-1">${content}</p>
+      <div class="flex justify-between items-center text-[10px] text-gray-400 pt-2 border-t border-gray-200/50">
+        <span><i class="fa-regular fa-clock"></i> ${time}</span>
+        <div class="flex items-center space-x-3 text-gray-500">
+          <button type="button" class="hover:text-teal-800 transition flex items-center gap-1"><i class="fa-regular fa-heart"></i> Like</button>
+          <button type="button" class="hover:text-teal-800 transition flex items-center gap-1"><i class="fa-regular fa-comment"></i> Reply</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSamplePosts(container) {
+  const samplePosts = [
+    {
+      author: "Yonas Tadesse",
+      campus: "Addis Ababa University (AAU)",
+      role: "Campus Fellowship Leader",
+      category: "Fellowship News",
+      content: "Welcome all new freshmen and continuing students to the new academic year! Join us for our weekly evening prayer and fellowship gatherings.",
+      time: "2 hours ago"
+    },
+    {
+      author: "Bethlehem Worku",
+      campus: "Hawassa University",
+      role: "Fellowship Student",
+      category: "Testimony",
+      content: "Praise God for His grace during exam week! Thank you to everyone who kept us in prayer.",
+      time: "5 hours ago"
+    }
+  ];
+
+  container.innerHTML = samplePosts.map(post => createPostCard(post)).join("");
+}
+
+

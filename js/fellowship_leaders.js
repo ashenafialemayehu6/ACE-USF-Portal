@@ -264,14 +264,19 @@ export function setupFellowshipLeadersSection() {
     if (returnFocus instanceof HTMLElement) returnFocus.focus();
   }
 
-  if (nav && !nav.querySelector("#nav-fellowship-leaders")) {
-    const link = document.createElement("a");
-    link.id = "nav-fellowship-leaders";
-    link.href = "#fellowship-leaders";
-    link.className = "hover:text-amber-400 transition flex items-center gap-1.5 py-1 lang-text-fellowship";
-    link.innerHTML = '<i class="fa-solid fa-people-group text-amber-500"></i><span></span>';
-    nav.append(link);
-    link.addEventListener("click", event => { event.preventDefault(); open(); });
+  let leadersLink = nav?.querySelector("#nav-fellowship-leaders");
+  if (nav && !leadersLink) {
+    leadersLink = document.createElement("a");
+    leadersLink.id = "nav-fellowship-leaders";
+    leadersLink.href = "#fellowship-leaders";
+    leadersLink.className = "hover:text-amber-400 transition flex items-center gap-1.5 py-1 lang-text-fellowship";
+    leadersLink.innerHTML = '<i class="fa-solid fa-people-group text-amber-500" aria-hidden="true"></i><span></span>';
+    nav.append(leadersLink);
+  }
+  // Bind both the pre-rendered header link and the fallback link exactly once.
+  if (leadersLink && leadersLink.dataset.leadersBound !== "true") {
+    leadersLink.dataset.leadersBound = "true";
+    leadersLink.addEventListener("click", event => { event.preventDefault(); open(); });
   }
   modal.querySelector("#fln-close").addEventListener("click", close);
   modal.addEventListener("click", event => { if (event.target === modal) close(); });

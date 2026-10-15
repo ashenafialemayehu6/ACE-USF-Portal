@@ -7,7 +7,6 @@ import { populateInstitutionSelect } from "./institutions.js";
 import { populateDepartmentSelect } from "./academic_data.js";
 import { renderLibrarySection, setupLibraryModal } from "./library_service.js";
 import { renderFellowshipLeadersSection, setupFellowshipLeadersSection } from "./fellowship_leaders.js";
-import { renderAboutSection } from "./about_service.js";
 // Database store for registered accounts
 const userDatabase = new Map();
 
@@ -75,10 +74,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const link = event.target.closest("a, button");
     if (!link) return;
 
-    if (link.matches("#nav-about, a[href='#about-section'], a[href='#about']")) {
-      event.preventDefault();
-      renderAboutSection("app-dashboard");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (link.matches("a[href='#ace-about-section'], a[href='#about-section']")) {
+      const template = document.getElementById("ace-about-template");
+      const dashboard = document.getElementById("app-dashboard");
+      if (template && dashboard) {
+        event.preventDefault();
+        dashboard.replaceChildren(template.content.cloneNode(true));
+        window.requestAnimationFrame(() => {
+          const aboutSection = document.getElementById("ace-about-section");
+          const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+          aboutSection?.scrollIntoView({ behavior, block: "start" });
+        });
+      }
       return;
     }
 
