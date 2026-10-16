@@ -1,5 +1,5 @@
 // js/app.js - Master Interactive Controller for ACE-USF Portal
-import { renderHomeSection } from './home_service.js';
+import { renderHomeSection, updateHomeGreeting } from './home_service.js';
 import { renderCampusNetworkSection } from './campus_network.js';
 import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
 import { renderChurchList } from "./church_locator.js";
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Initial Load (Render Home Section)
   safeInit("Initial Home Render", () => {
     if (typeof renderHomeSection === "function") {
-      renderHomeSection("app-dashboard");
+      renderHomeSection("app-dashboard", currentUser);
     }
   });
 
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("📍 Navigation: Home clicked");
       safeInit("Render Home", () => {
         if (typeof renderHomeSection === "function") {
-          renderHomeSection("app-dashboard");
+          renderHomeSection("app-dashboard", currentUser);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       });
@@ -97,6 +97,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    if (link.matches("[data-open-church-locator]")) {
+      event.preventDefault();
+      const churchModal = document.getElementById("church-modal");
+      const campusSelect = document.getElementById("locator-campus-select");
+      const churchResults = document.getElementById("church-results-container");
+      if (churchModal) {
+        churchModal.classList.remove("hidden");
+        renderChurchList(campusSelect?.value || "aau", churchResults);
+      }
+      return;
+    }
     if ((link.matches("a") || link.id === "auth-btn") && document.getElementById("weather-room-view")?.classList.contains("hidden") === false) {
       closeWeatherRoom();
     }
@@ -123,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    if (link.matches("a[href='#hubs-section']")) {
+    if (link.matches("[data-open-fellowship-leaders-top], [data-open-fellowship-leaders-middle], a[href='#hubs-section'], a[href='#fellowship-leaders']")) {
       event.preventDefault();
       renderFellowshipLeadersSection();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -557,7 +568,7 @@ function setupAuthModal() {
     setAuthBusy(resetBtn, true);
     try {
       await sendPasswordReset(email);
-      showAuthMessage(loginError, "Password reset instructions were sent if that account exists.");
+      showAuthMessage(loginError, "Thank you for being part of ACE-USF. If an account matches that email, secure reset instructions are on the way. Check your inbox and spam folder; if you normally use Google, choose Continue with Google. If you did not request a reset, ignore the email.");
     } catch (error) { showAuthError(loginError, error); }
     finally { setAuthBusy(resetBtn, false); }
   };
@@ -703,7 +714,6 @@ function setupUserDropdownToggle() {
   }
 
   ensureUserProfilePanel();
-  ensurePersonalizedGreeting();
   window.addEventListener("ace:language-change", () => {
     if (currentUser) {
       updatePersonalizedGreeting(currentUser);
@@ -732,39 +742,8 @@ function escapeAccountText(value = "") {
   return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
-function ensurePersonalizedGreeting() {
-  let banner = document.getElementById("personalized-greeting");
-  if (banner) return banner;
-  const dashboard = document.getElementById("app-dashboard");
-  if (!dashboard) return null;
-  banner = document.createElement("section");
-  banner.id = "personalized-greeting";
-  banner.className = "hidden mx-auto mb-4 w-full max-w-7xl px-4";
-  banner.innerHTML = '<div class="relative overflow-hidden rounded-2xl border border-teal-100 bg-gradient-to-r from-white via-teal-50 to-amber-50 px-5 py-4 shadow-sm sm:px-6"><div aria-hidden="true" class="absolute -right-5 -top-10 h-32 w-32 rounded-full border-[18px] border-teal-100/50"></div><div class="relative"><p id="personalized-greeting-title" class="text-lg font-black text-slate-900 sm:text-xl"></p><p id="personalized-greeting-copy" class="mt-1 text-xs leading-5 text-slate-600 sm:text-sm"></p></div></div>';
-  dashboard.insertAdjacentElement("beforebegin", banner);
-  return banner;
-}
-
 function updatePersonalizedGreeting(user) {
-  const banner = ensurePersonalizedGreeting();
-  if (!banner) return;
-  if (!user) {
-    banner.classList.add("hidden");
-    return;
-  }
-  const hour = new Date().getHours();
-  const firstName = String(user.displayName || "").trim().split(/\s+/)[0];
-  let timeEn = hour >= 5 && hour < 12 ? "Good morning" : hour >= 12 && hour < 17 ? "Good afternoon" : hour >= 17 && hour < 21 ? "Good evening" : "Good night";
-  let timeAm = hour >= 5 && hour < 12 ? "እንደምን አደሩ" : hour >= 12 && hour < 17 ? "እንደምን ዋሉ" : hour >= 17 && hour < 21 ? "እንደምን አመሹ" : "መልካም ምሽት";
-  const greeting = currentLanguage === "am"
-    ? `${timeAm}${firstName ? `፣ ${firstName}` : ""}! ወደ ACE-USF እንኳን ደህና መጡ።`
-    : `${timeEn}${firstName ? `, ${firstName}` : ""}! Welcome back to ACE-USF.`;
-  const copy = currentLanguage === "am"
-    ? "የሕብረት መረጃዎችን ይመልከቱ፣ ከተማሪዎች ጋር ይገናኙ፣ በእምነትና በእውቀት ያድጉ።"
-    : "Continue exploring fellowship resources, connecting with students, and growing in faith and knowledge.";
-  banner.querySelector("#personalized-greeting-title").textContent = greeting;
-  banner.querySelector("#personalized-greeting-copy").textContent = copy;
-  banner.classList.remove("hidden");
+  updateHomeGreeting(user);
 }
 
 function ensureUserProfilePanel() {
@@ -923,8 +902,6 @@ function updateAuthUI(user) {
   window.firebaseAuthUser = user || null;
   const authBtn = document.getElementById("auth-btn");
   const userHeaderProfile = document.getElementById("user-header-profile");
-  const headerUserName = document.getElementById("header-user-name");
-  const headerUserCampus = document.getElementById("header-user-campus");
 
   const dropdownName = document.getElementById("dropdown-full-name");
   const dropdownCampus = document.getElementById("dropdown-campus");
@@ -938,8 +915,6 @@ function updateAuthUI(user) {
     if (authBtn) authBtn.classList.add("hidden");
     if (userHeaderProfile) userHeaderProfile.classList.remove("hidden");
 
-    if (headerUserName) headerUserName.textContent = user.displayName || "ACE-USF Member";
-    if (headerUserCampus) headerUserCampus.textContent = user.campus || "Campus not added";
 
     if (dropdownName) dropdownName.textContent = user.displayName || "ACE-USF Member";
     if (dropdownCampus) dropdownCampus.textContent = user.campus || "Campus not added";
@@ -972,20 +947,24 @@ function updateAuthUI(user) {
 }
 
 function renderAccountAvatars(user) {
-  const profileBadge = document.querySelector("#user-menu-trigger .w-7.h-7");
+  const profileBadge = document.querySelector("#user-menu-trigger .user-avatar-badge");
   const dropdownBadge = document.querySelector("#user-dropdown-menu .w-10.h-10");
   const photo = profileImageUrl(user);
   const initials = escapeAccountText(userInitials(user));
-  [profileBadge, dropdownBadge].filter(Boolean).forEach((badge, index) => {
+  const displayName = user?.displayName || "ACE-USF Member";
+  const trigger = document.getElementById("user-menu-trigger");
+  if (trigger) {
+    trigger.setAttribute("aria-label", `Open account menu for ${displayName}`);
+    trigger.setAttribute("title", `Account: ${displayName}`);
+  }
+  [profileBadge, dropdownBadge].filter(Boolean).forEach(badge => {
     badge.classList.add("rounded-full", "overflow-hidden");
     badge.classList.remove("rounded-lg", "rounded-xl");
     badge.innerHTML = photo
       ? `<img src="${escapeAccountText(photo)}" alt="" class="h-full w-full object-cover">`
       : `<span aria-hidden="true">${initials}</span>`;
-    badge.setAttribute("aria-label", `${user?.displayName || "User"} profile`);
   });
 }
-
 async function handleLogout() {
   try { await logoutStudent(); }
   catch (error) { console.error("Sign out failed:", error); }
@@ -1083,5 +1062,7 @@ function renderSamplePosts(container) {
 
   container.innerHTML = samplePosts.map(post => createPostCard(post)).join("");
 }
+
+
 
 

@@ -98,7 +98,8 @@ function getEthiopiaHour(date = new Date()) {
 }
 
 function getTimeGreeting(date = new Date()) {
-  const hour = getEthiopiaHour(date);
+  // Match the time shown on the visitor's own device.
+  const hour = date.getHours();
   if (hour >= 5 && hour < 12) return "Good morning";
   if (hour >= 12 && hour < 17) return "Good afternoon";
   if (hour >= 17 && hour < 21) return "Good evening";
@@ -169,6 +170,7 @@ export function updateHomeGreeting(user = activeHomeUser) {
 
   const title = document.getElementById("home-greeting-title");
   const context = document.getElementById("home-greeting-context");
+  const blessing = document.getElementById("home-blessing-message");
 
   if (title) {
     title.textContent = activeHomeUser
@@ -181,6 +183,12 @@ export function updateHomeGreeting(user = activeHomeUser) {
     context.textContent = campus
       ? "ONE GOD, ONE NAME: JESUS.  ·  " + campus
       : "ONE GOD, ONE NAME: JESUS.";
+  }
+
+  if (blessing) {
+    blessing.textContent = activeHomeUser
+      ? "God bless you, " + getFirstName(activeHomeUser) + ". Thank you for being part of ACE-USF. Stay with us as we grow in faith, learning, fellowship, and service."
+      : "God bless you. Stay with ACE-USF as we grow in faith, learning, fellowship, and service.";
   }
 
   updateHomeDateLine();
@@ -359,6 +367,9 @@ export function renderHomeSection(containerId = "app-dashboard", user = null) {
     + '    </div>'
     + '    <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">' + PORTAL_SERVICES.map(renderServiceCard).join("") + '</div>'
     + '  </section>'
+    + '  <footer class="rounded-3xl border border-teal-200 bg-gradient-to-r from-teal-50 via-white to-amber-50 px-6 py-5 text-center shadow-sm sm:px-8">'
+    + '    <p id="home-blessing-message" class="mx-auto max-w-3xl break-words text-sm font-semibold leading-7 text-slate-700 sm:text-base"></p>'
+    + '  </footer>'
     + '</div>';
 
   updateHomeGreeting(activeHomeUser);

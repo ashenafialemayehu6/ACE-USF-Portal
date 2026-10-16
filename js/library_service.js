@@ -540,11 +540,12 @@ export function setupLibraryModal() {
     #library-modal #library-lobby { background-image: radial-gradient(ellipse at 15% 0%,rgba(145,227,206,.24),transparent 35%),radial-gradient(ellipse at 90% 100%,rgba(255,196,104,.17),transparent 42%); }
     #library-modal #library-room-scene { animation: library-room-enter .55s cubic-bezier(.2,.75,.25,1) both; }
     #library-modal .library-room-shell { background-size:180% 180%; animation:library-ambient 22s ease-in-out infinite alternate; }
-    #library-modal .library-room-photo { position:relative; min-height:220px; aspect-ratio:16/6; overflow:hidden; border:1px solid rgba(255,255,255,.7); border-radius:1.25rem; background:#173c46; box-shadow:0 22px 55px rgba(15,23,42,.22); }
-    #library-modal .library-room-photo img { width:100%; height:100%; min-height:220px; object-fit:cover; object-position:center 46%; transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .5s ease; }
-    #library-modal .library-room-photo:hover img { transform:scale(1.035); filter:saturate(1.08); }
-    #library-modal .library-room-photo::after { content:""; position:absolute; inset:30% 0 0; background:linear-gradient(180deg,transparent,rgba(10,24,28,.78)); pointer-events:none; }
-    #library-modal .library-photo-caption { position:absolute; z-index:1; left:1.1rem; right:1.1rem; bottom:1rem; display:flex; flex-wrap:wrap; align-items:end; justify-content:space-between; gap:.75rem; color:#fff; }
+    #library-modal .library-room-photo { position:relative; min-height:260px; aspect-ratio:16/7; overflow:hidden; border:1px solid rgba(255,255,255,.72); border-radius:1.35rem; background:#173c46; box-shadow:0 24px 60px rgba(15,23,42,.24); }
+    #library-modal .library-room-photo img { display:block; width:100%; height:100%; min-height:260px; object-fit:cover; object-position:center 47%; transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .5s ease; }
+    #library-modal .library-room-photo:hover img { transform:scale(1.035); filter:saturate(1.08) contrast(1.02); }
+    #library-modal .library-room-photo::before { content:""; position:absolute; z-index:1; inset:0; border:1px solid rgba(255,255,255,.14); border-radius:inherit; box-shadow:inset 0 0 75px rgba(6,20,28,.16); pointer-events:none; }
+    #library-modal .library-room-photo::after { content:""; position:absolute; inset:25% 0 0; background:linear-gradient(180deg,transparent 5%,rgba(7,19,24,.18) 44%,rgba(7,19,24,.84)); pointer-events:none; }
+    #library-modal .library-photo-caption { position:absolute; z-index:2; left:clamp(1rem,3vw,2rem); right:clamp(1rem,3vw,2rem); bottom:clamp(1rem,3vw,1.7rem); display:flex; flex-wrap:wrap; align-items:end; justify-content:space-between; gap:.75rem; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.3); }
     #library-modal .library-room-photo:hover { box-shadow:0 25px 65px rgba(15,23,42,.3); }
     #library-modal .library-book-card { position:relative; isolation:isolate; border:1px solid #e5e7eb; background:linear-gradient(145deg,#fff 0%,#fcfbf7 100%); box-shadow:0 8px 22px rgba(25,45,55,.07); transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease; }
     #library-modal .library-book-card:hover { transform:translateY(-4px); border-color:#93c5b9; box-shadow:0 18px 38px rgba(22,68,68,.15); }
@@ -553,6 +554,9 @@ export function setupLibraryModal() {
     #library-modal .library-book-spine { position:relative; overflow:hidden; border-radius:5px 5px 2px 2px; box-shadow:inset 3px 0 5px rgba(0,0,0,.2),inset -2px 0 4px rgba(255,255,255,.18),0 5px 10px rgba(0,0,0,.25); transition:transform .2s ease,filter .2s ease; }
     #library-modal .library-book-spine::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.2) 45%,transparent 60%); transform:translateX(-120%); transition:transform .45s ease; }
     #library-modal .library-book-spine:hover::after { transform:translateX(120%); }
+    #library-modal .library-bookshelf { position:relative; isolation:isolate; overflow:hidden; }
+    #library-modal .library-bookshelf::before { content:""; position:absolute; z-index:-1; inset:0; opacity:.3; background:repeating-linear-gradient(90deg,transparent 0 18px,rgba(255,236,190,.12) 19px 20px,transparent 21px 40px),linear-gradient(180deg,rgba(255,255,255,.06),transparent 55%); }
+    #library-modal .library-shelf-footer { height:9px; border-radius:2px; background:linear-gradient(180deg,rgba(255,224,170,.42),rgba(0,0,0,.3)); box-shadow:0 7px 12px rgba(0,0,0,.24); }
     #library-modal .library-resource-card { border:1px solid rgba(226,232,240,.9); background:linear-gradient(135deg,#fff 0%,#f7faf9 100%); box-shadow:0 7px 20px rgba(15,23,42,.045); transition:transform .2s ease,box-shadow .2s ease; }
     #library-modal .library-resource-card:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.09); }
     #library-modal [data-library-room-art] { position:relative; overflow:hidden; min-height:150px; border-radius:1.15rem; isolation:isolate; }
@@ -572,7 +576,8 @@ export function setupLibraryModal() {
     #library-modal .library-breeze { display:inline-flex; align-items:center; gap:.45rem; border:1px solid rgba(255,255,255,.65); border-radius:999px; background:rgba(255,255,255,.72); padding:.55rem .85rem; color:#174a58; font-size:.72rem; font-weight:700; box-shadow:0 8px 24px rgba(30,64,80,.09); }
     @keyframes library-room-enter { from { opacity:0; transform:translateY(12px) scale(.99); } to { opacity:1; transform:translateY(0) scale(1); } }
     @keyframes library-ambient { from { background-position:0% 0%; } to { background-position:100% 100%; } }
-    @media (prefers-reduced-motion: reduce) { #library-modal #library-room-scene,#library-modal .library-room-shell { animation:none; } #library-modal .library-book-card,#library-modal .library-resource-card { transition:none; } }
+    @media (max-width:640px) { #library-modal .library-room-photo { min-height:220px; aspect-ratio:4/3; } #library-modal .library-room-photo img { min-height:220px; object-position:center 44%; } }
+    @media (prefers-reduced-motion: reduce) { #library-modal #library-room-scene,#library-modal .library-room-shell { animation:none; } #library-modal .library-book-card,#library-modal .library-resource-card,#library-modal .library-room-photo img { transition:none; } }
   `;
   body.prepend(roomStyle);
 
@@ -718,9 +723,9 @@ export function setupLibraryModal() {
             <div><p class="text-[10px] font-extrabold uppercase tracking-[.2em] text-amber-800">Quiet reading room · Scripture & faith</p><h2 class="mt-1 text-2xl font-black tracking-tight text-amber-950 sm:text-3xl">Welcome to the Apostolic Spiritual Digital Library</h2><p class="mt-2 max-w-3xl text-xs leading-5 text-slate-700 sm:text-sm">A peaceful place to explore Scripture, deepen your understanding of Christian faith, discover spiritual wisdom, and grow in your walk with God.</p></div>
             <div class="flex shrink-0 items-center gap-2 rounded-2xl border border-amber-200 bg-white/70 px-4 py-3 text-xs font-semibold text-amber-950"><i class="fa-solid fa-book-bible text-amber-700"></i> Spiritual collections</div>
           </div>
-          <div class="rounded-2xl border border-amber-950/20 bg-gradient-to-b from-amber-900 to-amber-950 p-3 shadow-2xl sm:p-5">
+          <div class="library-bookshelf rounded-2xl border border-amber-950/20 bg-gradient-to-b from-amber-900 to-amber-950 p-3 shadow-2xl sm:p-5">
             <div class="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-amber-100/80"><span><i class="fa-solid fa-book-open mr-1"></i> Scripture & Apostolic study shelves</span><span class="hidden sm:inline">Select a book spine to explore its topic</span></div>
-            <div class="flex min-h-36 items-end gap-1 overflow-x-auto border-b-[10px] border-amber-950 bg-gradient-to-b from-amber-800/70 to-amber-900 px-2 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)] sm:gap-2 sm:px-4">${makeSpines(spiritualCategories, "spiritual")}</div>
+            <div class="flex min-h-36 items-end gap-1 overflow-x-auto border-b-[10px] border-amber-950 bg-gradient-to-b from-amber-800/70 to-amber-900 px-2 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)] sm:gap-2 sm:px-4">${makeSpines(spiritualCategories, "spiritual")}</div><div class="library-shelf-footer" aria-hidden="true"></div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-amber-100/80"><span>Warm wood reading room</span><span><i class="fa-solid fa-volume-low mr-1"></i> Quiet space</span></div>
           </div>
         </section>
@@ -741,13 +746,13 @@ export function setupLibraryModal() {
           <div class="flex shrink-0 items-center gap-2 rounded-2xl border border-sky-200 bg-white/75 px-4 py-3 text-xs font-semibold text-sky-950"><i class="fa-solid fa-graduation-cap text-sky-700"></i> Study collections</div>
         </div>
         <div class="grid gap-4 lg:grid-cols-2">
-          <div class="rounded-2xl border border-slate-300 bg-gradient-to-b from-slate-700 to-slate-900 p-3 shadow-2xl sm:p-5">
+          <div class="library-bookshelf rounded-2xl border border-slate-300 bg-gradient-to-b from-slate-700 to-slate-900 p-3 shadow-2xl sm:p-5">
             <div class="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-100/80"><span>Freshman course shelves</span><span class="hidden sm:inline">Choose a stream</span></div>
-            <div class="flex min-h-36 items-end gap-2 overflow-x-auto border-b-[10px] border-slate-950 bg-gradient-to-b from-slate-600/80 to-slate-800 px-3 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)]">${makeSpines(streamItems, "stream")}</div>
+            <div class="flex min-h-36 items-end gap-2 overflow-x-auto border-b-[10px] border-slate-950 bg-gradient-to-b from-slate-600/80 to-slate-800 px-3 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)]">${makeSpines(streamItems, "stream")}</div><div class="library-shelf-footer" aria-hidden="true"></div>
           </div>
-          <div class="rounded-2xl border border-slate-300 bg-gradient-to-b from-slate-700 to-slate-900 p-3 shadow-2xl sm:p-5">
+          <div class="library-bookshelf rounded-2xl border border-slate-300 bg-gradient-to-b from-slate-700 to-slate-900 p-3 shadow-2xl sm:p-5">
             <div class="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-100/80"><span>Department shelves</span><span class="hidden sm:inline">Select a subject</span></div>
-            <div class="flex min-h-36 items-end gap-1 overflow-x-auto border-b-[10px] border-slate-950 bg-gradient-to-b from-slate-600/80 to-slate-800 px-2 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)] sm:gap-2 sm:px-3">${makeSpines(seniorDepartments, "department")}</div>
+            <div class="flex min-h-36 items-end gap-1 overflow-x-auto border-b-[10px] border-slate-950 bg-gradient-to-b from-slate-600/80 to-slate-800 px-2 pt-5 shadow-[inset_0_8px_16px_rgba(0,0,0,.25)] sm:gap-2 sm:px-3">${makeSpines(seniorDepartments, "department")}</div><div class="library-shelf-footer" aria-hidden="true"></div>
           </div>
         </div>
         <p class="mt-3 text-[10px] text-slate-600"><i class="fa-solid fa-laptop mr-1"></i> Course shelves open your existing academic hub; verified digital books will appear as catalog sources are connected.</p>
