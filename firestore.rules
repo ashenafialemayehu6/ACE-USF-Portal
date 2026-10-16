@@ -1,0 +1,134 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // ACE-USF owner admin for the Spark plan.
+    function isAdmin() {
+      return signedIn()
+        && request.auth.uid == "Ya2V98lprcVm9HZvLiB0b6Ax8xj1";
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validProfile(data) {
+      return data.displayName is string
+        && data.displayName.size() > 0
+        && data.displayName.size() <= 100
+        && data.email is string
+        && data.campus is string
+        && data.campus.size() <= 150
+        && data.department is string
+        && data.department.size() <= 150
+        && data.telegram is string
+        && data.telegram.size() <= 100
+        && data.bio is string
+        && data.bio.size() <= 1500
+        && data.photoURL is string
+        && data.photoURL.size() <= 2048;
+    }
+
+    function validForumAuthor(author) {
+      return author == "Fellowship Member"
+        || (
+          request.auth.token.keys().hasAny(["email"])
+          && author == request.auth.token.email
+        )
+        || (
+          request.auth.token.keys().hasAny(["name"])
+          && author == request.auth.token.name
+        );
+    }
+
+    match /userProfiles/{uid} {
+      // Members read their own profile; the owner admin can read all profiles.
+      allow read: if owns(uid) || isAdmin();
+
+      allow create: if owns(uid)
+        && request.resource.data.keys().hasAll([
+          "uid", "displayName", "email", "campus", "department",
+          "telegram", "bio", "photoURL", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.keys().hasOnly([
+          "uid", "displayName", "email", "campus", "department",
+          "telegram", "bio", "photoURL", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && validProfile(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // Members may edit their own profile fields, but not their UID or email.
+      allow update: if owns(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "displayName", "campus", "department", "telegram",
+          "bio", "photoURL", "updatedAt"
+        ])
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validProfile(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
+    }
+
+    // Published content is public to read; only the owner admin can change it.
+    match /siteContent/{section}/items/{itemId} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Signed-in members can read and create forum posts.
+    // Only the owner admin can delete posts; posts cannot be edited.
+    match /forum_posts/{postId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll([
+          "author", "content", "category", "createdAt"
+        ])
+        && request.resource.data.keys().hasOnly([
+          "authorUid", "uid", "author", "content", "category", "createdAt"
+        ])
+        && (
+          !request.resource.data.keys().hasAny(["authorUid"])
+          || request.resource.data.authorUid == request.auth.uid
+        )
+        && (
+          !request.resource.data.keys().hasAny(["uid"])
+          || request.resource.data.uid == request.auth.uid
+        )
+        && request.resource.data.author is string
+        && request.resource.data.author.size() > 0
+        && request.resource.data.author.size() <= 100
+        && validForumAuthor(request.resource.data.author)
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 3000
+        && request.resource.data.category in [
+          "general", "prayer", "academic"
+        ]
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Private system records.
+    match /_system/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Deny access to every document path not explicitly allowed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

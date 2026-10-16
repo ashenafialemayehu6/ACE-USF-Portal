@@ -25,7 +25,7 @@ const COPY = {
     privacy: "Leader details and contacts appear only when verified and approved for public sharing.",
     report: "Report outdated information", reportSubject: "ACE-USF directory update",
     close: "Close directory", active: "Active fellowship", open: "View fellowship leaders",
-    roleNames: { "Astebabari": "Astebabari · Coordinator", "Genzeb Yazh": "Genzeb Yazh · Treasurer", "Tsehafi": "Tsehafi · Secretary" },
+    roleNames: { "Astebabari": "Coordinator አስተባባሪ", "Genzeb Yazh": "Treasurer ገንዘብ ያዥ", "Tsehafi": "Secretary ጸሐፊ" },
     totalNote: "Counts are calculated from published records."
   },
   am: {
@@ -44,7 +44,7 @@ const COPY = {
     privacy: "የመሪዎች መረጃና የመገኛ ዝርዝሮች የሚታዩት ከተረጋገጡና ለሕዝብ እንዲጋሩ ፈቃድ ከተሰጠ ብቻ ነው።",
     report: "ያልተዘመነ መረጃ ሪፖርት ያድርጉ", reportSubject: "የACE-USF ማውጫ ማሻሻያ",
     close: "ማውጫውን ዝጋ", active: "ንቁ ሕብረት", open: "የሕብረት መሪዎችን ይመልከቱ",
-    roleNames: { "Astebabari": "Astebabari · አስተባባሪ", "Genzeb Yazh": "Genzeb Yazh · ገንዘብ ያዥ", "Tsehafi": "Tsehafi · ጸሐፊ" },
+    roleNames: { "Astebabari": "Coordinator አስተባባሪ", "Genzeb Yazh": "Treasurer ገንዘብ ያዥ", "Tsehafi": "Secretary ጸሐፊ" },
     totalNote: "ቁጥሮቹ በታተሙ መረጃዎች መሠረት ይሰላሉ።"
   }
 };
@@ -84,6 +84,17 @@ export function setupFellowshipLeadersSection() {
     return;
   }
   document.documentElement.dataset.fellowshipLeadersReady = "true";
+
+  // The middle feature tile retains its existing directory behavior. The top
+  // navigation link now opens the dedicated room in fellowship_leaders_room.js.
+  document.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target : null;
+    const trigger = target?.closest("[data-open-fellowship-leaders-middle]");
+    if (!trigger) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    open();
+  }, true);
 
   let modal = document.getElementById("fellowship-leaders-modal");
   if (!modal) {
@@ -272,11 +283,6 @@ export function setupFellowshipLeadersSection() {
     leadersLink.className = "hover:text-amber-400 transition flex items-center gap-1.5 py-1 lang-text-fellowship";
     leadersLink.innerHTML = '<i class="fa-solid fa-people-group text-amber-500" aria-hidden="true"></i><span></span>';
     nav.append(leadersLink);
-  }
-  // Bind both the pre-rendered header link and the fallback link exactly once.
-  if (leadersLink && leadersLink.dataset.leadersBound !== "true") {
-    leadersLink.dataset.leadersBound = "true";
-    leadersLink.addEventListener("click", event => { event.preventDefault(); open(); });
   }
   modal.querySelector("#fln-close").addEventListener("click", close);
   modal.addEventListener("click", event => { if (event.target === modal) close(); });

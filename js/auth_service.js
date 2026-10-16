@@ -1,44 +1,42 @@
-// js/auth_service.js
+// Drop-in replacement for js/auth_service.js.
+// Keeps the existing export names, while using modular Firebase imports.
+// Import this from app.js with: import { registerStudent, loginStudent,
+// logoutStudent, checkAuthState } from './auth_service.js';
+import {
+  registerWithEmail, signInWithEmail, signOutCurrentUser, watchAuth,
+  getMyProfile, saveMyProfile, uploadMyProfilePhoto, changeMyPassword,
+  sendPasswordReset, resendVerificationEmail, signInWithGoogle, isCurrentUserAdmin
+} from "./firebase_auth_service.js";
 
-// Register new student account
-export async function registerStudent(email, password) {
-  try {
-    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
-    console.log("Registered student:", userCredential.user);
-    alert("Welcome to ACE-USF! Account created successfully.");
-    return userCredential.user;
-  } catch (error) {
-    console.error("Registration error:", error.message);
-    throw error; // Let app.js handle displaying the error in the form
-  }
+// Existing callers can keep registerStudent(email, password). Pass profile
+// fields as the optional third argument to save name and campus on registration.
+export async function registerStudent(email, password, profile = {}) {
+  const name = String(profile.name || profile.displayName || email.split("@")[0]).trim();
+  const campus = String(profile.campus || "").trim();
+  const department = String(profile.department || "").trim();
+  return registerWithEmail({ name, email, password, campus, department });
 }
 
-// Sign in existing student
 export async function loginStudent(email, password) {
-  try {
-    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-    console.log("Logged in student:", userCredential.user);
-    alert("Welcome back to ACE-USF!");
-    return userCredential.user;
-  } catch (error) {
-    console.error("Login error:", error.message);
-    throw error; // Let app.js handle displaying the error in the form
-  }
+  return signInWithEmail({ email, password });
 }
 
-// Sign out student
 export async function logoutStudent() {
-  try {
-    await firebase.auth().signOut();
-    alert("Signed out successfully.");
-  } catch (error) {
-    console.error("Logout error:", error.message);
-  }
+  return signOutCurrentUser();
 }
 
-// Listen for auth state changes
 export function checkAuthState(callback) {
-  firebase.auth().onAuthStateChanged((user) => {
-    callback(user);
-  });
+  return watchAuth(callback);
 }
+
+// Account tools for the signed-in user's private account page.
+export {
+  getMyProfile,
+  saveMyProfile,
+  uploadMyProfilePhoto,
+  changeMyPassword,
+  sendPasswordReset,
+  resendVerificationEmail,
+  signInWithGoogle,
+  isCurrentUserAdmin
+};
