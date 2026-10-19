@@ -1,7 +1,7 @@
 // ACE-USF Firebase web configuration.
 // Browser configuration is public by design; protect data with Firebase Rules.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
+import { browserLocalPersistence, getAuth, setPersistence } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-storage.js";
 
@@ -17,5 +17,10 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+// Keep member sessions across browser restarts until they explicitly sign out.
+export const authPersistenceReady = setPersistence(auth, browserLocalPersistence).catch(error => {
+  console.warn("Could not set persistent sign-in storage:", error);
+  return false;
+});
 export const db = getFirestore(app);
 export const storage = getStorage(app);

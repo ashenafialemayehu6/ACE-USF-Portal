@@ -14,7 +14,8 @@ export async function registerStudent(email, password, profile = {}) {
   const name = String(profile.name || profile.displayName || email.split("@")[0]).trim();
   const campus = String(profile.campus || "").trim();
   const department = String(profile.department || "").trim();
-  return registerWithEmail({ name, email, password, campus, department });
+  const sex = String(profile.sex || "").trim();
+  return registerWithEmail({ name, email, password, campus, department, sex });
 }
 
 export async function loginStudent(email, password) {

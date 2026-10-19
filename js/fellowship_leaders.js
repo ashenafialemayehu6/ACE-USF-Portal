@@ -63,6 +63,12 @@ function validTelegram(username) {
   return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(clean) ? clean : "";
 }
 
+function validPhone(value) {
+  const display = String(value || "").trim();
+  const tel = display.replace(/[^\d+]/g, "");
+  return /^\+?\d{7,15}$/.test(tel) ? { display, tel } : null;
+}
+
 function safePhotoUrl(value) {
   try {
     const url = new URL(String(value || ""), window.location.href);
@@ -200,10 +206,31 @@ export function setupFellowshipLeadersSection() {
     const photo = textFor(leader, "photoUrl") && leader.photoApproved === true ? safePhotoUrl(leader.photoUrl) : "";
     const initials = name ? name.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toLocaleUpperCase()).join("") : "?";
     const username = leader.telegramPublic === true ? validTelegram(leader.telegram) : "";
+    const phone = leader.phonePublic === true ? validPhone(leader.phone) : null;
     const contact = username
       ? `<a class="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg bg-[#168b79] px-3 py-2 text-[11px] font-extrabold text-white transition hover:bg-[#0d6b60] focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2" href="https://t.me/${encodeURIComponent(username)}" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram text-sm"></i>${info.contact}</a>`
       : `<span class="mt-3 inline-flex items-center gap-2 text-[10px] font-semibold text-slate-500"><i class="fa-brands fa-telegram text-slate-400"></i>${info.telegramMissing}</span>`;
-    return `<article class="fln-leader-card rounded-2xl p-3 sm:p-4"><div class="flex items-start gap-3"><div class="fln-avatar" aria-hidden="true">${photo ? `<img src="${escapeHTML(photo)}" alt="" loading="lazy">` : escapeHTML(initials)}</div><div class="min-w-0 flex-1"><span class="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-900">${escapeHTML(roleLabel(role))}</span><h4 class="mt-2 text-sm font-extrabold text-slate-900">${escapeHTML(name || info.nameMissing)}</h4><p class="mt-1 text-[11px] text-slate-600"><i class="fa-solid fa-graduation-cap mr-1 text-teal-700"></i>${escapeHTML(department)}</p>${intro ? `<p class="mt-2 text-xs leading-5 text-slate-600">${escapeHTML(intro)}</p>` : ""}${contact}</div></div></article>`;
+    const phoneContact = phone ? `<a class="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-[11px] font-extrabold text-teal-900 hover:bg-teal-100" href="tel:${escapeHTML(phone.tel)}"><i class="fa-solid fa-phone"></i>${escapeHTML(phone.display)}</a>` : "";
+    return `<article class="fln-leader-card rounded-2xl p-3 sm:p-4"><div class="flex items-start gap-3"><div class="fln-avatar" aria-hidden="true">${photo ? `<img src="${escapeHTML(photo)}" alt="" loading="lazy">` : escapeHTML(initials)}</div><div class="min-w-0 flex-1"><span class="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-wide text-amber-900">${escapeHTML(roleLabel(role))}</span><h4 class="mt-2 text-sm font-extrabold text-slate-900">${escapeHTML(name || info.nameMissing)}</h4><p class="mt-1 text-[11px] text-slate-600"><i class="fa-solid fa-graduation-cap mr-1 text-teal-700"></i>${escapeHTML(department)}</p>${intro ? `<p class="mt-2 text-xs leading-5 text-slate-600">${escapeHTML(intro)}</p>` : ""}${contact}${phoneContact}</div></div></article>`;
+  }
+
+  function renderBranches(record) {
+    if (!Array.isArray(record.branches) || !record.branches.length) return "";
+    const rows = record.branches.map(branch => {
+      const people = (Array.isArray(branch.leaders) ? branch.leaders : []).map(person => {
+        const phone = person.phonePublic === true ? validPhone(person.phone) : null;
+        return `<li class="py-1.5 text-xs text-slate-700">${escapeHTML(person.fullName || "Leader details pending")}${phone ? ` <a class="ml-2 font-bold text-teal-800 underline" href="tel:${escapeHTML(phone.tel)}">${escapeHTML(phone.display)}</a>` : ""}</li>`;
+      }).join("");
+      return `<article class="rounded-xl border border-slate-200 bg-white p-3"><h4 class="text-xs font-black text-slate-900">${escapeHTML(branch.name || "University branch")}</h4><ul class="mt-1 divide-y divide-slate-100">${people}</ul></article>`;
+    }).join("");
+    return `<section class="mt-4 rounded-2xl border border-teal-100 bg-teal-50/50 p-4"><h4 class="mb-2 text-sm font-black text-teal-950"><i class="fa-solid fa-code-branch mr-2"></i>University branches and leaders</h4><div class="grid gap-2 sm:grid-cols-2">${rows}</div></section>`;
+  }
+
+  function renderChurchContact(record) {
+    const priest = record.churchPriest || {};
+    if (!priest.name && !priest.phone) return "";
+    const phone = priest.phonePublic === true ? validPhone(priest.phone) : null;
+    return `<section class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-4"><span><span class="block text-[9px] font-black uppercase tracking-wider text-amber-800">Church priest / chaplain</span><strong class="mt-1 block text-sm text-slate-900">${escapeHTML(priest.name || "Name not provided")}</strong></span>${phone ? `<a class="inline-flex min-h-10 items-center gap-2 rounded-xl bg-teal-800 px-3 py-2 text-xs font-extrabold text-white" href="tel:${escapeHTML(phone.tel)}"><i class="fa-solid fa-phone"></i>${escapeHTML(phone.display)}</a>` : ""}</section>`;
   }
 
   function campusCard(record) {
@@ -221,7 +248,7 @@ export function setupFellowshipLeadersSection() {
     });
     const cardId = `fln-campus-${String(record.id || record.universityName).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
     const orderedRoles = ROLE_ORDER.map(role => matchingPeople.find(person => person.role === role) || { role });
-    return `<details class="fln-campus-card group overflow-hidden rounded-2xl"><summary class="flex cursor-pointer list-none items-center gap-4 p-4 sm:p-5"><span class="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-teal-50 text-lg text-teal-800"><i class="fa-solid fa-building-columns"></i></span><span class="min-w-0 flex-1"><span class="block text-base font-black text-slate-950 sm:text-lg">${escapeHTML(record.universityName)}</span><span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500"><span><i class="fa-solid fa-location-dot mr-1 text-amber-700"></i>${escapeHTML(record.city || info.location)}</span>${record.fellowshipName ? `<span><i class="fa-solid fa-people-group mr-1 text-teal-700"></i>${escapeHTML(record.fellowshipName)}</span>` : ""}</span></span><span class="ml-1 inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition group-open:rotate-180"><i class="fa-solid fa-chevron-down text-xs"></i></span></summary><div id="${escapeHTML(cardId)}" class="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5">${record.description ? `<p class="mb-3 text-xs leading-5 text-slate-600">${escapeHTML(record.description)}</p>` : ""}<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${orderedRoles.map(person => leaderCard(record, person, person.role)).join("")}</div></div></details>`;
+    return `<details class="fln-campus-card group overflow-hidden rounded-2xl"><summary class="flex cursor-pointer list-none items-center gap-4 p-4 sm:p-5"><span class="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-teal-50 text-lg text-teal-800"><i class="fa-solid fa-building-columns"></i></span><span class="min-w-0 flex-1"><span class="block text-base font-black text-slate-950 sm:text-lg">${escapeHTML(record.universityName)}</span><span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500"><span><i class="fa-solid fa-location-dot mr-1 text-amber-700"></i>${escapeHTML(record.city || info.location)}</span>${record.fellowshipName ? `<span><i class="fa-solid fa-people-group mr-1 text-teal-700"></i>${escapeHTML(record.fellowshipName)}</span>` : ""}</span></span><span class="ml-1 inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition group-open:rotate-180"><i class="fa-solid fa-chevron-down text-xs"></i></span></summary><div id="${escapeHTML(cardId)}" class="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5">${record.description ? `<p class="mb-3 text-xs leading-5 text-slate-600">${escapeHTML(record.description)}</p>` : ""}<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${orderedRoles.map(person => leaderCard(record, person, person.role)).join("")}</div>${renderBranches(record)}${renderChurchContact(record)}</div></details>`;
   }
 
   function render() {

@@ -4,7 +4,7 @@ import { renderCampusNetworkSection } from './campus_network.js';
 import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
 import { renderChurchList } from "./church_locator.js";
 import { populateInstitutionSelect } from "./institutions.js";
-import { populateDepartmentSelect } from "./academic_data.js";
+import { populateDepartmentSelect, seniorDepartments } from "./academic_data.js";
 import { renderLibrarySection, setupLibraryModal } from "./library_service.js";
 import { renderFellowshipLeadersSection, setupFellowshipLeadersSection } from "./fellowship_leaders.js";
 import { setupStudentForumRoom, closeStudentForumRoom, isStudentForumRoomOpen } from "./student_forum.js";
@@ -17,6 +17,11 @@ import {
   isCurrentUserAdmin
 } from "./auth_service.js";
 import { setupAdminDashboard } from "./admin_dashboard.js";
+import { openAudioRoom, setupAudioRoom } from "./audio_room.js";
+import { openAdviceRoom, setupAdviceRoom } from "./advice_room.js";
+import { openMeetingRoom, setupMeetingRoom } from "./meeting_room.js";
+import { db } from "./firebase_config.js";
+import { doc, serverTimestamp, Timestamp, updateDoc } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js";
 
 let currentUser = null;
 let currentLanguage = "en";
@@ -91,6 +96,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const link = event.target.closest("a, button");
     if (!link) return;
 
+    if (link.matches("[data-open-audio-room]")) {
+      event.preventDefault();
+      openAudioRoom(link);
+      return;
+    }
+
+    if (link.matches("[data-open-advice-room]")) {
+      event.preventDefault();
+      openAdviceRoom(link);
+      return;
+    }
+
+    if (link.matches("[data-open-meeting-room]")) {
+      event.preventDefault();
+      openMeetingRoom(link);
+      return;
+    }
+
     if (link.matches("a[data-open-weather-room], a[href='#weather-section']")) {
       event.preventDefault();
       openWeatherRoom(link);
@@ -158,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
       populateInstitutionSelect("modal-reg-campus", "Choose your university or college...");
       populateInstitutionSelect("locator-campus-select", "Filter church locator by campus...");
       populateInstitutionSelect("weather-uni-select", "Select campus city for weather...");
+      populateDepartmentSelect("modal-reg-department");
     }
   });
 
@@ -183,6 +207,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   safeInit("Freshmen & Alumni Journey Hub", setupFreshmenAlumniRoom);
   safeInit("Library Modal", setupLibraryModal);
+  safeInit("Audio Room", setupAudioRoom);
+  safeInit("Student Advice Room", setupAdviceRoom);
+  safeInit("Meeting Room", setupMeetingRoom);
   safeInit("Fellowship Leaders Network", setupFellowshipLeadersSection);
   safeInit("Fellowship Leaders Dedicated Room", setupFellowshipLeadersRoom);
   safeInit("Secure Admin Workspace", setupAdminDashboard);
@@ -550,10 +577,18 @@ function setupAuthModal() {
     googleBtn.onclick = async () => {
       setAuthBusy(googleBtn, true);
       try {
-        await signInWithGoogle();
+        const campusSelect = document.getElementById("modal-reg-campus");
+        const departmentId = document.getElementById("modal-reg-department")?.value || "";
+        const department = seniorDepartments.find(item => item.id === departmentId)?.name || "";
+        await signInWithGoogle({
+          campus: campusSelect && campusSelect.selectedIndex > 0 ? campusSelect.options[campusSelect.selectedIndex].text : "",
+          department,
+          sex: document.getElementById("modal-reg-sex")?.value || ""
+        });
         modal?.classList.add("hidden");
       } catch (error) {
-        showAuthError(loginError, error);
+        const creating = registerForm && !registerForm.classList.contains("hidden");
+        showAuthError(creating ? regError : loginError, error);
       } finally { setAuthBusy(googleBtn, false); }
     };
   }
@@ -593,6 +628,9 @@ function setupAuthModal() {
       const email = document.getElementById("modal-reg-email").value.trim().toLowerCase();
       const campusSelect = document.getElementById("modal-reg-campus");
       const campus = campusSelect && campusSelect.selectedIndex >= 0 ? campusSelect.options[campusSelect.selectedIndex].text : "Campus Fellow";
+      const departmentId = document.getElementById("modal-reg-department")?.value || "";
+      const department = seniorDepartments.find(item => item.id === departmentId)?.name || "";
+      const sex = document.getElementById("modal-reg-sex")?.value || "";
       const pass = document.getElementById("modal-reg-password").value;
       const confirm = document.getElementById("modal-reg-confirm").value;
 
@@ -610,7 +648,7 @@ function setupAuthModal() {
       const submit = registerForm.querySelector('[type="submit"]');
       setAuthBusy(submit, true);
       try {
-        await registerStudent(email, pass, { name, campus, department: "" });
+        await registerStudent(email, pass, { name, campus, department, sex });
         modal?.classList.add("hidden");
         alert("Account created. Please check your email to verify your address.");
       } catch (error) { showAuthError(regError, error); }
@@ -769,11 +807,14 @@ function ensureUserProfilePanel() {
             <label class="text-xs font-semibold text-slate-600">Full name<input id="profile-display-name" required maxlength="100" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-600"></label>
             <label class="text-xs font-semibold text-slate-600">Email address<input id="profile-email" readonly class="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-600"></label>
             <label class="text-xs font-semibold text-slate-600">University / college<input id="profile-campus" maxlength="160" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-600"></label>
-            <label class="text-xs font-semibold text-slate-600">Department<input id="profile-department" maxlength="120" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-600"></label>
+            <label class="text-xs font-semibold text-slate-600">Department<input id="profile-department" readonly aria-readonly="true" class="mt-1 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-700"></label>
+            <label class="text-xs font-semibold text-slate-600">Sex recorded for this account<input id="profile-sex" readonly aria-readonly="true" class="mt-1 w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm text-slate-700"></label>
+            <p class="text-[11px] leading-5 text-slate-500 sm:col-span-2">Department and sex are account details used for restricted meeting eligibility. They cannot be changed here; contact the administrator if a correction is needed.</p>
             <label class="text-xs font-semibold text-slate-600">Telegram username<input id="profile-telegram" maxlength="80" placeholder="@username" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-600"></label>
             <label class="text-xs font-semibold text-slate-600 sm:col-span-2">Short introduction<textarea id="profile-bio" maxlength="400" rows="3" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-teal-600"></textarea></label>
           </div>
           <div class="flex flex-wrap items-center gap-3"><label class="cursor-pointer rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50"><i class="fa-regular fa-image mr-2"></i>Choose profile photo<input id="profile-photo-file" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only"></label><span class="text-[11px] text-slate-500">JPG, PNG, WebP · up to 5 MB</span><span id="profile-save-status" role="status" class="text-xs"></span></div>
+          <div class="rounded-2xl border border-sky-100 bg-sky-50/70 p-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><p class="text-xs font-extrabold text-slate-800"><i class="fa-brands fa-telegram mr-2 text-sky-600"></i>Connect Telegram for private request updates</p><p class="mt-1 text-[11px] leading-5 text-slate-600">Link your account once so the bot can send Meeting Hall decisions and Advice Room review results to you.</p></div><button id="ace-telegram-link" type="button" class="rounded-xl bg-sky-700 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-sky-800">Connect Telegram</button></div><p id="ace-telegram-link-status" role="status" class="mt-2 text-xs text-slate-600"></p></div>
           <button type="submit" class="rounded-xl bg-teal-800 px-5 py-2.5 text-xs font-extrabold text-white shadow transition hover:bg-teal-700">Save profile</button>
         </form>
         <form id="ace-password-form" class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -795,7 +836,6 @@ function ensureUserProfilePanel() {
       await saveMyProfile({
         displayName: panel.querySelector("#profile-display-name").value,
         campus: panel.querySelector("#profile-campus").value,
-        department: panel.querySelector("#profile-department").value,
         telegram: panel.querySelector("#profile-telegram").value,
         bio: panel.querySelector("#profile-bio").value
       });
@@ -803,6 +843,34 @@ function ensureUserProfilePanel() {
       updateAuthUI({ ...currentUser, ...fresh, email: currentUser.email, uid: currentUser.uid });
       status.textContent = "Profile saved.";
     } catch (error) { status.textContent = error?.message || "Could not save profile."; }
+  });
+  panel.querySelector("#ace-telegram-link").addEventListener("click", async () => {
+    const status = panel.querySelector("#ace-telegram-link-status");
+    const button = panel.querySelector("#ace-telegram-link");
+    button.disabled = true;
+    status.textContent = "Preparing a secure one-time link…";
+    try {
+      await saveMyProfile({
+        displayName: panel.querySelector("#profile-display-name").value,
+        campus: panel.querySelector("#profile-campus").value,
+        telegram: panel.querySelector("#profile-telegram").value,
+        bio: panel.querySelector("#profile-bio").value
+      });
+      const bytes = new Uint8Array(20);
+      crypto.getRandomValues(bytes);
+      const code = [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+      await updateDoc(doc(db, "userProfiles", currentUser.uid), {
+        telegramLinkCode: code,
+        telegramLinkExpiresAt: Timestamp.fromDate(new Date(Date.now() + 10 * 60 * 1000)),
+        updatedAt: serverTimestamp()
+      });
+      const deepLink = `https://t.me/ACE_USF_AssistantBot?start=link_${code}`;
+      status.innerHTML = `Link ready for 10 minutes. <a class="font-bold text-sky-800 underline" href="${deepLink}" target="_blank" rel="noopener noreferrer">Open the ACE-USF bot and finish linking</a>.`;
+    } catch (error) {
+      status.textContent = error?.message || "Could not prepare the Telegram link. Save your profile and try again.";
+    } finally {
+      button.disabled = false;
+    }
   });
   panel.querySelector("#profile-photo-file").addEventListener("change", async event => {
     const file = event.target.files?.[0];
@@ -867,8 +935,12 @@ function renderUserProfilePanel() {
   panel.querySelector("#profile-email").value = user.email || "";
   panel.querySelector("#profile-campus").value = user.campus || "";
   panel.querySelector("#profile-department").value = user.department || "";
+  panel.querySelector("#profile-sex").value = user.sex ? (user.sex === "female" ? "Female" : "Male") : "Not recorded · contact the administrator";
   panel.querySelector("#profile-telegram").value = user.telegram || user.telegramUsername || "";
   panel.querySelector("#profile-bio").value = user.bio || user.biography || "";
+  panel.querySelector("#ace-telegram-link-status").textContent = user.telegramChatId
+    ? "Telegram is linked. Meeting Hall decisions and Advice Room reviews can be sent to your bot chat."
+    : "Not connected yet. Use the button to link your private Telegram chat.";
   panel.querySelector("#profile-resend-verification").classList.toggle("hidden", Boolean(user.emailVerified));
 }
 

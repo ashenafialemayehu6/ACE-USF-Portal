@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/telegram.js": {
+      "maxDuration": 30
+    },
+    "api/meeting-token.js": {
+      "maxDuration": 30
+    }
+  }
+}

@@ -5,6 +5,8 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineString } = require("firebase-functions/params");
 
 initializeApp();
+// ACE-USF Telegram website assistant webhook
+Object.assign(exports, require("./telegram_bot"));
 
 const auth = getAuth();
 const db = getFirestore();

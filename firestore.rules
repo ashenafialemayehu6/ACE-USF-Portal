@@ -16,6 +16,115 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function validMeetingAccessRequest(requestId) {
+      let programPath = /databases/$(database)/documents/siteContent/meetingPrograms/items/$(request.resource.data.programId);
+      let profilePath = /databases/$(database)/documents/userProfiles/$(request.auth.uid);
+      let memberPath = /databases/$(database)/documents/meetingRoomMembers/$(request.auth.uid);
+      return signedIn()
+        && request.resource.data.keys().hasAll([
+          "uid", "requesterName", "requesterEmail", "universityName", "fellowshipRole", "programId", "programTitle",
+          "audience", "requestedDepartment", "profileSex", "departmentGroup",
+          "eligibilityConfirmed", "status", "adminNote", "createdAt", "updatedAt"
+        ])
+        && request.resource.data.keys().hasOnly([
+          "uid", "requesterName", "requesterEmail", "universityName", "fellowshipRole", "programId", "programTitle",
+          "audience", "requestedDepartment", "profileSex", "departmentGroup",
+          "eligibilityConfirmed", "status", "adminNote", "createdAt", "updatedAt", "telegramChatId"
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.programId is string
+        && request.resource.data.programId.size() > 0
+        && requestId == request.auth.uid + "_" + request.resource.data.programId
+        && request.resource.data.requesterName is string
+        && request.resource.data.requesterName.size() > 0
+        && request.resource.data.requesterName.size() <= 150
+        && request.resource.data.requesterEmail is string
+        && request.resource.data.requesterEmail.size() <= 200
+        && request.resource.data.universityName is string
+        && request.resource.data.universityName.size() <= 160
+        && request.resource.data.fellowshipRole in [
+          "Current student", "Campus fellowship leader", "Church servant",
+          "Students’ family", "Alumnus / graduate", "Other fellowship member"
+        ]
+        && (!request.resource.data.keys().hasAny(["telegramChatId"])
+          || (exists(profilePath)
+            && request.resource.data.telegramChatId is string
+            && request.resource.data.telegramChatId.size() <= 24
+            && get(profilePath).data.telegramChatId == request.resource.data.telegramChatId))
+        && request.resource.data.programTitle is string
+        && request.resource.data.programTitle.size() <= 200
+        && request.resource.data.audience in ["department", "departmentGroup", "leaders", "women"]
+        && request.resource.data.requestedDepartment is string
+        && request.resource.data.requestedDepartment.size() > 0
+        && request.resource.data.requestedDepartment.size() <= 150
+        && request.resource.data.profileSex in ["female", "male"]
+        && request.resource.data.departmentGroup is string
+        && request.resource.data.departmentGroup.size() <= 80
+        && request.resource.data.eligibilityConfirmed == true
+        && request.resource.data.status == "pending"
+        && request.resource.data.adminNote == ""
+        && exists(programPath)
+        && exists(profilePath)
+        && get(programPath).data.published == true
+        && get(programPath).data.audience == request.resource.data.audience
+        && get(profilePath).data.department is string
+        && get(profilePath).data.department.size() > 0
+        && request.resource.data.requestedDepartment == get(profilePath).data.department
+        && request.resource.data.profileSex == get(profilePath).data.sex
+        && (request.resource.data.audience != "department"
+          || get(programPath).data.department == get(profilePath).data.department)
+        && (request.resource.data.audience != "women"
+          || get(profilePath).data.sex == "female")
+        && (!exists(memberPath)
+          || get(memberPath).data.active != true
+          || !get(memberPath).data.keys().hasAny(["department"])
+          || get(memberPath).data.department == get(profilePath).data.department)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function canEnterMeeting(eventId) {
+      let eventPath = /databases/$(database)/documents/siteContent/meetingPrograms/items/$(eventId);
+      let membershipPath = /databases/$(database)/documents/meetingRoomMembers/$(request.auth.uid);
+      let profilePath = /databases/$(database)/documents/userProfiles/$(request.auth.uid);
+      return isAdmin()
+        || (signedIn()
+          && exists(eventPath)
+          && get(eventPath).data.published == true
+          && (
+            get(eventPath).data.audience == "all"
+            || (get(eventPath).data.audience == "department"
+              && exists(membershipPath)
+              && get(membershipPath).data.active == true
+              && exists(profilePath)
+              && get(profilePath).data.department.size() > 0
+              && get(profilePath).data.department == get(eventPath).data.department
+              && get(membershipPath).data.department == get(eventPath).data.department)
+            || (get(eventPath).data.audience == "departmentGroup"
+              && exists(membershipPath)
+              && get(membershipPath).data.active == true
+              && exists(profilePath)
+              && get(profilePath).data.department.size() > 0
+              && get(membershipPath).data.department == get(profilePath).data.department
+              && get(membershipPath).data.departmentGroup == get(eventPath).data.departmentGroup)
+            || (get(eventPath).data.audience == "leaders"
+              && exists(membershipPath)
+              && get(membershipPath).data.active == true
+              && exists(profilePath)
+              && get(profilePath).data.department.size() > 0
+              && get(membershipPath).data.department == get(profilePath).data.department
+              && get(membershipPath).data.leadersOnly == true)
+            || (get(eventPath).data.audience == "women"
+              && exists(membershipPath)
+              && get(membershipPath).data.active == true
+              && exists(profilePath)
+              && get(profilePath).data.department.size() > 0
+              && get(profilePath).data.sex == "female"
+              && get(membershipPath).data.womenMinistry == true
+              && get(membershipPath).data.sex == "female")
+          ));
+    }
+
     function validProfile(data) {
       return data.displayName is string
         && data.displayName.size() > 0
@@ -25,6 +134,7 @@ service cloud.firestore {
         && data.campus.size() <= 150
         && data.department is string
         && data.department.size() <= 150
+        && (!data.keys().hasAny(["sex"]) || data.sex in ["female", "male"])
         && data.telegram is string
         && data.telegram.size() <= 100
         && data.bio is string
@@ -56,7 +166,7 @@ service cloud.firestore {
         ])
         && request.resource.data.keys().hasOnly([
           "uid", "displayName", "email", "campus", "department",
-          "telegram", "bio", "photoURL", "createdAt", "updatedAt"
+          "sex", "telegram", "bio", "photoURL", "createdAt", "updatedAt"
         ])
         && request.resource.data.uid == uid
         && request.resource.data.email == request.auth.token.email
@@ -65,16 +175,28 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
 
       // Members may edit their own profile fields, but not their UID or email.
-      allow update: if owns(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "displayName", "campus", "department", "telegram",
-          "bio", "photoURL", "updatedAt"
-        ])
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.email == resource.data.email
-        && request.resource.data.createdAt == resource.data.createdAt
-        && validProfile(request.resource.data)
-        && request.resource.data.updatedAt == request.time;
+      allow update: if (
+          isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "displayName", "campus", "department", "sex", "updatedAt"
+          ])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.createdAt == resource.data.createdAt
+          && validProfile(request.resource.data)
+          && request.resource.data.updatedAt == request.time
+        ) || (
+          owns(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "displayName", "campus", "telegram", "bio", "photoURL",
+            "telegramLinkCode", "telegramLinkExpiresAt", "updatedAt"
+          ])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.createdAt == resource.data.createdAt
+          && validProfile(request.resource.data)
+          && request.resource.data.updatedAt == request.time
+        );
 
       allow delete: if isAdmin();
     }
@@ -82,6 +204,28 @@ service cloud.firestore {
     // Published content is public to read; only the owner admin can change it.
     match /siteContent/{section}/items/{itemId} {
       allow read: if isAdmin() || resource.data.published == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Only an administrator may verify member departments or grant leader access.
+    // A member may read only their own verified access record.
+    match /meetingRoomMembers/{uid} {
+      allow read: if isAdmin() || owns(uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Members may submit a pending request for their own UID and read its status.
+    // Only the administrator may approve, reject, or delete requests.
+    match /meetingAccessRequests/{requestId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if validMeetingAccessRequest(requestId);
+      allow update, delete: if isAdmin();
+    }
+
+    // Meeting links and access instructions are stored separately from public program cards.
+    // Firebase Rules check the signed-in member's department/campus or leader roster before disclosure.
+    match /meetingProgramSecrets/{eventId} {
+      allow read: if canEnterMeeting(eventId);
       allow create, update, delete: if isAdmin();
     }
 

@@ -213,7 +213,7 @@
   <!-- Feature Highlights Bar -->
   <section id="about-section" class="max-w-7xl mx-auto px-4 w-full my-6">
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         
         <a href="#ace-about-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
           <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg group-hover:bg-teal-800 group-hover:text-white transition">
@@ -242,6 +242,39 @@
           <div>
             <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Apostolic Library</h4>
             <p class="text-[11px] text-gray-500 mt-1 leading-tight">Spiritual literature & upcoming academic study resources.</p>
+          </div>
+        </a>
+
+        <a href="#audio-room" data-open-audio-room aria-label="Open the ACE-USF Audio Room" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-2xl border border-transparent hover:-translate-y-1 hover:border-violet-100 hover:bg-violet-50/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 transition duration-200 group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-amber-100 text-violet-800 flex items-center justify-center text-lg group-hover:from-violet-800 group-hover:to-teal-800 group-hover:text-white transition">
+            <i class="fa-solid fa-headphones" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-violet-900">Audio Room</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Preaching, solo songs, Apostolic songs, and poems.</p>
+            <span data-audio-resource-count class="mt-2 inline-flex rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-violet-800">Collection ready</span>
+          </div>
+        </a>
+
+        <a href="#advice-room" data-open-advice-room aria-label="Open the ACE-USF Student Advice Room" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-2xl border border-transparent hover:-translate-y-1 hover:border-emerald-100 hover:bg-emerald-50/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition duration-200 group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-amber-100 text-emerald-800 flex items-center justify-center text-lg group-hover:from-emerald-800 group-hover:to-amber-600 group-hover:text-white transition">
+            <i class="fa-solid fa-comments" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-emerald-900">Student Advice Room</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Wisdom from students, graduates, families, and church servants.</p>
+            <span data-advice-count class="mt-2 inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-emerald-800">Stories of wisdom · coming soon</span>
+          </div>
+        </a>
+
+        <a href="#meeting-room" data-open-meeting-room aria-label="Open the ACE-USF Meeting Room" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-2xl border border-transparent hover:-translate-y-1 hover:border-indigo-100 hover:bg-indigo-50/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 transition duration-200 group cursor-pointer">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-amber-100 text-indigo-800 flex items-center justify-center text-lg group-hover:from-indigo-800 group-hover:to-slate-800 group-hover:text-white transition">
+            <i class="fa-solid fa-people-roof" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-gray-800 group-hover:text-indigo-900">Meeting Room</h4>
+            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Department Bible studies, conferences, and leaders’ programs.</p>
+            <span data-meeting-count class="mt-2 inline-flex rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-indigo-800">Gather, study, grow</span>
           </div>
         </a>
 
@@ -702,21 +735,26 @@
   </div>
 
   <!-- AUTHENTICATION MODAL POPUP -->
-  <div id="auth-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-md w-full overflow-hidden transition-all">
-      
-      <!-- Modal Header -->
-      <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center border-b border-slate-800">
-        <div class="flex items-center gap-2 text-sm font-bold">
-          <i class="fa-solid fa-shield-halved text-amber-400"></i>
-          <span>ACE-USF Portal Authentication</span>
-        </div>
-        <button id="close-modal-btn" type="button" class="text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden flex items-stretch justify-center overflow-y-auto bg-slate-950/85 p-0 backdrop-blur-md">
+    <div class="relative grid min-h-screen w-full max-w-none overflow-hidden bg-[#f7f8f5] text-slate-900 shadow-2xl lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+      <aside class="relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-16">
+        <div class="absolute -right-24 top-16 h-80 w-80 rounded-full bg-teal-400/10 blur-3xl" aria-hidden="true"></div>
+        <div class="absolute -bottom-28 -left-20 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" aria-hidden="true"></div>
+        <div class="relative z-10 flex items-center gap-3"><span class="grid h-12 w-12 place-items-center rounded-2xl border border-amber-300/30 bg-white/10 text-xl text-amber-300"><i class="fa-solid fa-book-bible" aria-hidden="true"></i></span><span class="text-sm font-black tracking-wide">ACE-USF · MEMBER PORTAL</span></div>
+        <div class="relative z-10 my-12 max-w-xl"><p class="text-[10px] font-black uppercase tracking-[.25em] text-amber-300">One fellowship · many campuses</p><h1 class="mt-5 text-4xl font-black leading-tight tracking-tight xl:text-6xl">Grow in wisdom.<br><span class="text-teal-200">Walk together.</span></h1><p class="mt-6 max-w-lg text-sm leading-7 text-slate-300">Sign in to meet your fellowship, join your department’s Bible study, and explore the ACE-USF campus network.</p></div>
+        <div class="relative z-10 flex flex-wrap gap-2 text-[10px] font-bold text-slate-200"><span class="rounded-full border border-white/15 bg-white/5 px-3 py-2"><i class="fa-solid fa-shield-halved mr-1.5 text-amber-300"></i>Secure member access</span><span class="rounded-full border border-white/15 bg-white/5 px-3 py-2"><i class="fa-solid fa-earth-africa mr-1.5 text-teal-200"></i>Across Ethiopia</span></div>
+      </aside>
 
-      <div class="p-6 space-y-4">
+      <section class="relative flex min-h-screen min-w-0 flex-col overflow-y-auto bg-[#f7f8f5]">
+        <!-- Full-page Authentication Header -->
+        <div class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-200 bg-[#f7f8f5]/95 px-5 py-4 backdrop-blur-xl sm:px-8 lg:px-12">
+          <div class="flex items-center gap-2 text-sm font-black text-slate-900"><i class="fa-solid fa-shield-halved text-amber-600" aria-hidden="true"></i><span>ACE-USF Portal Authentication</span></div>
+          <button id="close-modal-btn" type="button" aria-label="Close sign in" class="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-slate-400 hover:text-slate-900"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+      <div class="mx-auto w-full max-w-2xl flex-1 px-5 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-14">
+        <div class="mb-7"><p class="text-[10px] font-black uppercase tracking-[.22em] text-teal-800">Your ACE-USF account</p><h2 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Welcome back</h2><p class="mt-2 text-sm leading-6 text-slate-600">Sign in or create your member account. Your session stays active until you sign out.</p></div>
+        <div class="space-y-5">
         <!-- Google Sign-In Option -->
         <button id="google-auth-btn" type="button" class="w-full bg-white hover:bg-gray-50 text-gray-800 font-bold py-2.5 px-4 border border-gray-200 rounded-xl text-xs flex items-center justify-center gap-3 shadow-xs transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
@@ -780,6 +818,21 @@
             </select>
           </div>
           <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1" for="modal-reg-department">Department · required for departmental Bible study</label>
+            <select id="modal-reg-department" required class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50 text-gray-700">
+              <option value="" disabled selected>Choose your department...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-600 mb-1" for="modal-reg-sex">Sex recorded for your account</label>
+            <select id="modal-reg-sex" required class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50 text-gray-700">
+              <option value="" disabled selected>Choose one...</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+            <p class="mt-1 text-[10px] leading-4 text-gray-500">This account detail cannot be changed from your profile. Women’s Ministry access is reviewed by an administrator.</p>
+          </div>
+          <div>
             <label class="block text-[11px] font-semibold text-gray-600 mb-1">Password (at least 8 characters)</label>
             <input type="password" id="modal-reg-password" required minlength="8" autocomplete="new-password" placeholder="••••••••" class="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-700 bg-gray-50" />
           </div>
@@ -793,7 +846,9 @@
           </button>
         </form>
 
+        </div>
       </div>
+      </section>
     </div>
   </div>
 
@@ -815,7 +870,7 @@
       <div class="space-y-3">
         <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Quick Links</h4>
         <ul class="space-y-2 text-[11px] text-slate-300">
-          <li><a href="#" class="hover:text-amber-400 transition">Home Portal</a></li>
+          <li><a href="#portal-home" class="hover:text-amber-400 transition">Home Portal</a></li>
           <li><a href="#ace-about-section" class="hover:text-amber-400 transition">About ACE-USF</a></li>
           <li><a href="#forum-section" class="hover:text-amber-400 transition">Student Forum & Prayers</a></li>
           <li><a href="#weather-section" class="hover:text-amber-400 transition">Campus Weather Updates</a></li>
@@ -825,11 +880,11 @@
       <div class="space-y-3">
         <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Campus Networks</h4>
         <ul class="space-y-2 text-[11px] text-slate-300">
-          <li><a href="#" class="hover:text-amber-400 transition">Addis Ababa & Central Institutions</a></li>
-          <li><a href="#" class="hover:text-amber-400 transition">Oromia Campus Fellowships</a></li>
-          <li><a href="#" class="hover:text-amber-400 transition">Amhara Regional Campuses</a></li>
-          <li><a href="#" class="hover:text-amber-400 transition">Sidama & South Fellowships</a></li>
-          <li><a href="#" class="hover:text-amber-400 transition">Tigray, Eastern & Private Colleges</a></li>
+          <li><a href="#campus-network" data-footer-room="campuses" class="hover:text-amber-400 transition">Addis Ababa & Central Institutions</a></li>
+          <li><a href="#campus-network" data-footer-room="campuses" class="hover:text-amber-400 transition">Oromia Campus Fellowships</a></li>
+          <li><a href="#campus-network" data-footer-room="campuses" class="hover:text-amber-400 transition">Amhara Regional Campuses</a></li>
+          <li><a href="#campus-network" data-footer-room="campuses" class="hover:text-amber-400 transition">Sidama & South Fellowships</a></li>
+          <li><a href="#campus-network" data-footer-room="campuses" class="hover:text-amber-400 transition">Tigray, Eastern & Private Colleges</a></li>
         </ul>
       </div>
 
@@ -837,15 +892,18 @@
         <h4 class="font-bold text-amber-400 text-xs uppercase tracking-wider">Connect With Us</h4>
         <p class="text-[11px] text-slate-300">Join our official communication channels for weekly devotionals and national fellowship updates.</p>
         <div class="flex items-center space-x-3 pt-1">
-          <a href="https://t.me" target="_blank" class="bg-slate-800 hover:bg-sky-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
-            <i class="fa-brands fa-telegram"></i>
+          <a href="https://t.me/ACE_USF_AssistantBot" target="_blank" rel="noopener noreferrer" aria-label="Open the ACE-USF Assistant bot" title="ACE-USF Assistant bot" class="bg-slate-800 hover:bg-sky-600 text-white w-9 h-9 rounded-xl flex items-center justify-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+            <i class="fa-brands fa-telegram" aria-hidden="true"></i>
           </a>
-          <a href="#" class="bg-slate-800 hover:bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
-            <i class="fa-brands fa-youtube"></i>
+          <a href="https://youtu.be/OmA9U3AgUss" target="_blank" rel="noopener noreferrer" aria-label="Open the official Apostolic Church YouTube channel" title="Official YouTube" class="bg-slate-800 hover:bg-red-600 text-white w-9 h-9 rounded-xl flex items-center justify-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+            <i class="fa-brands fa-youtube" aria-hidden="true"></i>
           </a>
-          <a href="mailto:info@aceusf.org" class="bg-slate-800 hover:bg-teal-600 text-white w-8 h-8 rounded-lg flex items-center justify-center transition">
-            <i class="fa-solid fa-envelope"></i>
+          <a href="mailto:info@aceusf.org?subject=ACE-USF%20Portal%20question" aria-label="Email ACE-USF" title="Email ACE-USF" class="bg-slate-800 hover:bg-teal-600 text-white w-9 h-9 rounded-xl flex items-center justify-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
           </a>
+          <button type="button" data-footer-room="connect" aria-label="View all official ACE-USF channels" title="All official channels" class="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-white w-9 h-9 rounded-xl flex items-center justify-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+            <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -853,12 +911,14 @@
     <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-3">
       <p>© 2026 Apostolic Church of Ethiopia University Students Fellowship (ACE-USF). All rights reserved.</p>
       <div class="flex space-x-4">
-        <a href="#" class="hover:text-slate-200 transition">Privacy Policy</a>
-        <a href="#" class="hover:text-slate-200 transition">Terms of Service</a>
-        <a href="#" class="hover:text-slate-200 transition">Contact Admin</a>
+        <a href="#privacy" data-footer-room="privacy" class="hover:text-slate-200 transition">Privacy Policy</a>
+        <a href="#terms" data-footer-room="terms" class="hover:text-slate-200 transition">Terms of Service</a>
+        <a href="#contact-admin" data-footer-room="contact" class="hover:text-slate-200 transition">Contact Admin</a>
       </div>
     </div>
   </footer>
+
+  <script type="module" src="./js/footer_experience.js"></script>
 
   <!-- Main Application Script -->
   <script type="module" src="./js/app.js"></script>

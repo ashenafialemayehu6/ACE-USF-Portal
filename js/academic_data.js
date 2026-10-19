@@ -401,10 +401,15 @@ export function populateDepartmentSelect(selectElementId) {
   if (!select) return;
 
   let optionsHTML = `<option value="" disabled selected>Choose your department...</option>`;
-  const groups = [...new Set(seniorDepartments.map(d => d.group))];
+  const collegeForGroup = group => group === "Health Sciences"
+    ? "College of Medicine & Health Sciences"
+    : group === "Engineering & Tech"
+      ? "College of Engineering & Technology"
+      : "College of Social Sciences";
+  const groups = [...new Set(seniorDepartments.map(d => collegeForGroup(d.group)))];
 
   groups.forEach(group => {
-    const list = seniorDepartments.filter(d => d.group === group);
+    const list = seniorDepartments.filter(d => collegeForGroup(d.group) === group);
     optionsHTML += `<optgroup label="🏢 ${group}">`;
     list.forEach(dept => {
       optionsHTML += `<option value="${dept.id}">${dept.name}</option>`;

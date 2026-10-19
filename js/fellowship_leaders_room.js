@@ -536,6 +536,64 @@ function buildLeaderRoster(row) {
     grid.append(leader ? leaderCard(leader, role, "current") : missingLeaderCard(role));
   }
   section.append(heading, grid);
+  const branches = buildBranchRoster(row);
+  const priest = buildChurchContact(row);
+  if (branches) section.append(branches);
+  if (priest) section.append(priest);
+  return section;
+}
+
+function buildBranchRoster(row) {
+  if (!Array.isArray(row.branches) || !row.branches.length) return null;
+  const section = document.createElement("section");
+  section.className = "mt-4 rounded-2xl border border-teal-100 bg-teal-50/50 p-4";
+  section.append(textNode("h4", "mb-2 text-sm font-black text-teal-950", "University branches and leaders"));
+  const grid = document.createElement("div");
+  grid.className = "grid gap-2 sm:grid-cols-2";
+  row.branches.forEach(branch => {
+    const card = document.createElement("article");
+    card.className = "rounded-xl border border-slate-200 bg-white p-3";
+    card.append(textNode("h5", "text-xs font-black text-slate-900", branch.name || "University branch"));
+    const list = document.createElement("ul");
+    list.className = "mt-1 divide-y divide-slate-100";
+    (Array.isArray(branch.leaders) ? branch.leaders : []).forEach(person => {
+      const item = document.createElement("li");
+      item.className = "flex flex-wrap items-center justify-between gap-2 py-1.5 text-xs text-slate-700";
+      item.append(document.createTextNode(person.fullName || "Leader details pending"));
+      const phone = person.phonePublic === true ? validPhone(person.phone) : null;
+      if (phone) {
+        const link = document.createElement("a");
+        link.className = "font-bold text-teal-800 underline";
+        link.href = `tel:${phone.tel}`;
+        link.textContent = phone.display;
+        item.append(link);
+      }
+      list.append(item);
+    });
+    card.append(list);
+    grid.append(card);
+  });
+  section.append(grid);
+  return section;
+}
+
+function buildChurchContact(row) {
+  const priest = row.churchPriest || {};
+  if (!priest.name && !priest.phone) return null;
+  const section = document.createElement("section");
+  section.className = "mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-4";
+  const identity = document.createElement("div");
+  identity.append(textNode("span", "block text-[9px] font-black uppercase tracking-wider text-amber-800", "Church priest / chaplain"));
+  identity.append(textNode("strong", "mt-1 block text-sm text-slate-900", priest.name || "Name not provided"));
+  section.append(identity);
+  const phone = priest.phonePublic === true ? validPhone(priest.phone) : null;
+  if (phone) {
+    const link = document.createElement("a");
+    link.className = "inline-flex min-h-10 items-center gap-2 rounded-xl bg-teal-800 px-3 py-2 text-xs font-extrabold text-white";
+    link.href = `tel:${phone.tel}`;
+    link.append(icon("fa-solid fa-phone"), document.createTextNode(phone.display));
+    section.append(link);
+  }
   return section;
 }
 
@@ -572,6 +630,14 @@ function leaderCard(leader, role, status) {
     contact.append(icon("fa-brands fa-telegram"), document.createTextNode(t("contact")));
     meta.append(contact);
   } else meta.append(textNode("span", "inline-flex items-center gap-1.5 text-[9px] font-semibold text-slate-500", t("contactUnavailable")));
+  const phone = leader.phonePublic === true ? validPhone(leader.phone) : null;
+  if (phone) {
+    const phoneContact = document.createElement("a");
+    phoneContact.className = "inline-flex items-center gap-1.5 rounded-lg border border-teal-100 bg-teal-50 px-2.5 py-1.5 text-[9px] font-extrabold text-teal-900 hover:bg-teal-100";
+    phoneContact.href = `tel:${phone.tel}`;
+    phoneContact.append(icon("fa-solid fa-phone"), document.createTextNode(phone.display));
+    meta.append(phoneContact);
+  }
   article.append(upper, meta);
   return article;
 }
@@ -664,6 +730,12 @@ function initials(name = "") {
 function validTelegram(value) {
   const clean = String(value || "").trim().replace(/^@/, "");
   return /^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(clean) ? clean : "";
+}
+
+function validPhone(value) {
+  const display = String(value || "").trim();
+  const tel = display.replace(/[^\d+]/g, "");
+  return /^\+?\d{7,15}$/.test(tel) ? { display, tel } : null;
 }
 function safeImage(value) {
   try {

@@ -1,6 +1,6 @@
 // Secure client-side account helpers for ACE-USF.
 // Firestore and Storage Rules enforce data permissions.
-import { auth, db, storage } from "./firebase_config.js";
+import { auth, authPersistenceReady, db, storage } from "./firebase_config.js";
 import {
   GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   signInWithPopup, signOut, sendPasswordResetEmail, updateProfile,
@@ -24,11 +24,22 @@ export async function registerWithEmail({
   email,
   password,
   campus,
-  department = ""
+  department = "",
+  sex = ""
 }) {
+  await authPersistenceReady;
   if (String(password || "").length < 8) {
     throw new Error("Use at least 8 characters for your password.");
   }
+
+  const displayName = String(name || "").trim();
+  const cleanCampus = String(campus || "").trim();
+  const cleanDepartment = String(department || "").trim();
+  const cleanSex = String(sex || "").trim().toLowerCase();
+  if (!displayName) throw new Error("Enter your full name to create an account.");
+  if (!cleanCampus) throw new Error("Choose your university or college to create an account.");
+  if (!cleanDepartment) throw new Error("Choose your department to create your account.");
+  if (!["female", "male"].includes(cleanSex)) throw new Error("Choose the sex recorded for your account.");
 
   const credential = await createUserWithEmailAndPassword(
     auth,
@@ -36,16 +47,15 @@ export async function registerWithEmail({
     password
   );
 
-  const displayName = name.trim();
-
   await updateProfile(credential.user, { displayName });
 
   await setDoc(profileRef(credential.user.uid), {
     uid: credential.user.uid,
     displayName,
     email: credential.user.email,
-    campus: campus.trim(),
-    department: department.trim(),
+    campus: cleanCampus,
+    department: cleanDepartment,
+    sex: cleanSex,
     telegram: "",
     bio: "",
     photoURL: "",
@@ -71,6 +81,7 @@ export async function resendVerificationEmail() {
 }
 
 export async function signInWithEmail({ email, password }) {
+  await authPersistenceReady;
   const credential = await signInWithEmailAndPassword(
     auth,
     email.trim(),
@@ -80,7 +91,8 @@ export async function signInWithEmail({ email, password }) {
   return credential.user;
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(profileDetails = {}) {
+  await authPersistenceReady;
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
@@ -89,12 +101,19 @@ export async function signInWithGoogle() {
   const existing = await getDoc(refForUser);
 
   if (!existing.exists()) {
+    const campus = String(profileDetails.campus || "").trim();
+    const department = String(profileDetails.department || "").trim();
+    const sex = String(profileDetails.sex || "").trim().toLowerCase();
+    if (!campus || !department || !["female", "male"].includes(sex)) {
+      throw new Error("To create a Google account, first open Create Account and choose your university, department, and recorded sex. Then choose Continue with Google.");
+    }
     await setDoc(refForUser, {
       uid: credential.user.uid,
       displayName: credential.user.displayName || "",
       email: credential.user.email || "",
-      campus: "",
-      department: "",
+      campus,
+      department,
+      sex,
       telegram: "",
       bio: "",
       photoURL: credential.user.photoURL || "",
@@ -125,7 +144,6 @@ export async function getMyProfile() {
 export async function saveMyProfile({
   displayName,
   campus,
-  department,
   telegram,
   bio
 }) {
@@ -146,7 +164,6 @@ export async function saveMyProfile({
   await setDoc(profileRef(user.uid), {
     displayName: cleanName,
     campus: String(campus || "").trim(),
-    department: String(department || "").trim(),
     telegram: String(telegram || "").trim(),
     bio: String(bio || "").trim(),
     updatedAt: serverTimestamp()
