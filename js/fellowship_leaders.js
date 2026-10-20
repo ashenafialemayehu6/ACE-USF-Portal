@@ -1,20 +1,13 @@
 // ACE-USF Fellowship Leaders Network
 import { fellowshipUniversityRecords } from "./fellowship_leaders_data.js";
 
-const ROLE_ORDER = ["Astebabari", "Genzeb Yazh", "Tsehafi"];
-const ROLE_LABELS = {
-  "Astebabari": { en: "Coordinator", am: "አስተባባሪ" },
-  "Genzeb Yazh": { en: "Treasurer", am: "ገንዘብ ያዥ" },
-  "Tsehafi": { en: "Secretary", am: "ጸሐፊ" }
-};
-
 const COPY = {
   en: {
     nav: "Fellowship Leaders", eyebrow: "ACE-USF · UNIVERSITY COMMUNITY",
     title: "Welcome to the ACE-USF Fellowship Leaders Network",
     intro: "A platform to connect university fellowship leaders and students across Ethiopia. Discover the fellowship serving at your campus, learn about its leaders, and find public contact details when they are available. Wherever you study, you are part of a wider fellowship family. Let us grow together in faith, knowledge, unity, and service.",
     search: "Search university, city, leader, department, or role…", searchLabel: "Search the directory",
-    university: "All universities", city: "All cities", department: "All departments", role: "All roles",
+    university: "All universities", city: "All cities", department: "All departments",
     universities: "Participating universities", leaders: "Published leaders", cities: "Represented cities",
     directory: "Campus directory", emptyTitle: "The directory is getting ready",
     empty: "No verified university or leader records have been published yet. ACE-USF can add a campus once its details and leaders are confirmed.",
@@ -25,7 +18,6 @@ const COPY = {
     privacy: "Leader details and contacts appear only when verified and approved for public sharing.",
     report: "Report outdated information", reportSubject: "ACE-USF directory update",
     close: "Close directory", active: "Active fellowship", open: "View fellowship leaders",
-    roleNames: { "Astebabari": "Coordinator አስተባባሪ", "Genzeb Yazh": "Treasurer ገንዘብ ያዥ", "Tsehafi": "Secretary ጸሐፊ" },
     totalNote: "Counts are calculated from published records."
   },
   am: {
@@ -33,7 +25,7 @@ const COPY = {
     title: "ወደ ACE-USF የሕብረት መሪዎች አውታረ መረብ እንኳን ደህና መጡ",
     intro: "በኢትዮጵያ ያሉ የዩኒቨርሲቲ ሕብረት መሪዎችንና ተማሪዎችን ለማገናኘት የተዘጋጀ መድረክ ነው። በግቢዎ ያለውን ሕብረት ይፈልጉ፣ መሪዎቹን ይወቁ፣ እና ይፋ የሆኑ የመገኛ መንገዶችን ይጠቀሙ። በየትኛውም ዩኒቨርሲቲ ቢማሩ የአንድ ቤተሰብ አካል ነዎት። በእምነት፣ በእውቀት፣ በአንድነትና በአገልግሎት አብረን እንደግ።",
     search: "ዩኒቨርሲቲ፣ ከተማ፣ መሪ፣ ዲፓርትመንት ወይም ሚና ይፈልጉ…", searchLabel: "ማውጫውን ይፈልጉ",
-    university: "ሁሉም ዩኒቨርሲቲዎች", city: "ሁሉም ከተሞች", department: "ሁሉም ዲፓርትመንቶች", role: "ሁሉም ሚናዎች",
+    university: "ሁሉም ዩኒቨርሲቲዎች", city: "ሁሉም ከተሞች", department: "ሁሉም ዲፓርትመንቶች",
     universities: "የተሳተፉ ዩኒቨርሲቲዎች", leaders: "የታተሙ መሪዎች", cities: "የተወከሉ ከተሞች",
     directory: "የግቢ ማውጫ", emptyTitle: "ማውጫው በዝግጅት ላይ ነው",
     empty: "የተረጋገጡ የዩኒቨርሲቲ ወይም የመሪ መረጃዎች ገና አልታተሙም። የግቢውና የመሪዎቹ መረጃ ከተረጋገጠ በኋላ ACE-USF ሊያክለው ይችላል።",
@@ -44,7 +36,6 @@ const COPY = {
     privacy: "የመሪዎች መረጃና የመገኛ ዝርዝሮች የሚታዩት ከተረጋገጡና ለሕዝብ እንዲጋሩ ፈቃድ ከተሰጠ ብቻ ነው።",
     report: "ያልተዘመነ መረጃ ሪፖርት ያድርጉ", reportSubject: "የACE-USF ማውጫ ማሻሻያ",
     close: "ማውጫውን ዝጋ", active: "ንቁ ሕብረት", open: "የሕብረት መሪዎችን ይመልከቱ",
-    roleNames: { "Astebabari": "Coordinator አስተባባሪ", "Genzeb Yazh": "Treasurer ገንዘብ ያዥ", "Tsehafi": "Secretary ጸሐፊ" },
     totalNote: "ቁጥሮቹ በታተሙ መረጃዎች መሠረት ይሰላሉ።"
   }
 };
@@ -55,7 +46,8 @@ function escapeHTML(value = "") {
 
 function cleanRecords() {
   return (Array.isArray(fellowshipUniversityRecords) ? fellowshipUniversityRecords : [])
-    .filter(item => item && item.active !== false && String(item.universityName || "").trim());
+    .filter(item => item && item.active !== false && String(item.universityName || "").trim())
+    .sort((a, b) => String(a.universityName || "").localeCompare(String(b.universityName || ""), undefined, { sensitivity: "base", numeric: true }));
 }
 
 function validTelegram(username) {
@@ -124,7 +116,7 @@ export function setupFellowshipLeadersSection() {
           <div class="fln-search-panel mt-5 rounded-2xl border border-teal-100 bg-white p-4 shadow-sm sm:p-5">
             <label for="fln-search" id="fln-search-label" class="mb-2 block text-xs font-extrabold text-slate-700"></label>
             <div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-teal-700"></i><input id="fln-search" type="search" class="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-teal-600 focus:bg-white focus:ring-4 focus:ring-teal-600/10"></div>
-            <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"><select id="fln-university-filter" class="fln-filter"></select><select id="fln-city-filter" class="fln-filter"></select><select id="fln-department-filter" class="fln-filter"></select><select id="fln-role-filter" class="fln-filter"></select></div>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"><select id="fln-university-filter" class="fln-filter"></select><select id="fln-city-filter" class="fln-filter"></select><select id="fln-department-filter" class="fln-filter"></select></div>
           </div>
           <div class="mt-7 flex flex-wrap items-end justify-between gap-2"><div><p class="text-[10px] font-black uppercase tracking-[.2em] text-teal-800">ACE-USF</p><h2 id="fln-directory-heading" class="mt-1 text-xl font-black text-slate-950 sm:text-2xl"></h2></div><p id="fln-total-note" class="text-[11px] text-slate-500"></p></div>
           <div id="fln-directory" class="mt-4 grid gap-4 lg:grid-cols-2" aria-live="polite"></div>
@@ -162,14 +154,20 @@ export function setupFellowshipLeadersSection() {
   const search = modal.querySelector("#fln-search");
   const filters = {
     university: modal.querySelector("#fln-university-filter"), city: modal.querySelector("#fln-city-filter"),
-    department: modal.querySelector("#fln-department-filter"), role: modal.querySelector("#fln-role-filter")
+    department: modal.querySelector("#fln-department-filter")
   };
   let returnFocus = null;
 
   function textFor(record, key) { return String(record?.[key] || "").trim(); }
   function getLeaders(record) { return Array.isArray(record.leaders) ? record.leaders : []; }
-  function roleLabel(role) { return COPY[language].roleNames[role] || role; }
-  function filledLeaders(record) { return getLeaders(record).filter(person => textFor(person, "fullName")); }
+  function roleLabel(role) { return role || (language === "am" ? "የሕብረት መሪ" : "Fellowship leader"); }
+  function allRecordLeaders(record) {
+    return [
+      ...getLeaders(record),
+      ...(Array.isArray(record.branches) ? record.branches.flatMap(branch => Array.isArray(branch.leaders) ? branch.leaders : []) : [])
+    ];
+  }
+  function filledLeaders(record) { return allRecordLeaders(record).filter(person => textFor(person, "fullName")); }
 
   function fillSelect(select, placeholder, values) {
     const existing = select.value;
@@ -179,14 +177,14 @@ export function setupFellowshipLeadersSection() {
 
   function refreshFilterOptions() {
     const records = cleanRecords();
-    fillSelect(filters.university, COPY[language].university, [...new Set(records.map(item => textFor(item, "universityName")))].sort());
-    fillSelect(filters.city, COPY[language].city, [...new Set(records.map(item => textFor(item, "city")).filter(Boolean))].sort());
-    fillSelect(filters.department, COPY[language].department, [...new Set(records.flatMap(item => getLeaders(item).map(person => textFor(person, "department")).filter(Boolean)))].sort());
-    fillSelect(filters.role, COPY[language].role, ROLE_ORDER);
+    const alpha = (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: "base", numeric: true });
+    fillSelect(filters.university, COPY[language].university, [...new Set(records.map(item => textFor(item, "universityName")))].sort(alpha));
+    fillSelect(filters.city, COPY[language].city, [...new Set(records.map(item => textFor(item, "city")).filter(Boolean))].sort(alpha));
+    fillSelect(filters.department, COPY[language].department, [...new Set(records.flatMap(item => getLeaders(item).map(person => textFor(person, "department")).filter(Boolean)))].sort(alpha));
   }
 
   function matches(record, query) {
-    const leaders = getLeaders(record);
+    const leaders = allRecordLeaders(record);
     const haystack = [record.universityName, record.city, record.fellowshipName, record.description,
       ...leaders.flatMap(person => [person.fullName, person.department, person.role, roleLabel(person.role)])]
       .join(" ").toLocaleLowerCase();
@@ -194,8 +192,7 @@ export function setupFellowshipLeadersSection() {
     const universityMatch = !filters.university.value || record.universityName === filters.university.value;
     const cityMatch = !filters.city.value || record.city === filters.city.value;
     const departmentMatch = !filters.department.value || leaders.some(person => person.department === filters.department.value);
-    const roleMatch = !filters.role.value || leaders.some(person => person.role === filters.role.value);
-    return queryMatch && universityMatch && cityMatch && departmentMatch && roleMatch;
+    return queryMatch && universityMatch && cityMatch && departmentMatch;
   }
 
   function leaderCard(record, leader, role) {
@@ -238,17 +235,17 @@ export function setupFellowshipLeadersSection() {
     const leaders = getLeaders(record);
     const matchingPeople = leaders.filter(person => {
       const q = search.value.trim().toLocaleLowerCase();
-      const selectedRole = filters.role.value;
       const selectedDept = filters.department.value;
-      const roleMatches = !selectedRole || person.role === selectedRole;
       const deptMatches = !selectedDept || person.department === selectedDept;
       const personWords = [person.fullName, person.department, person.role, roleLabel(person.role), person.introduction].join(" ").toLocaleLowerCase();
       const personQueryMatches = !q || personWords.includes(q) || [record.universityName, record.city, record.fellowshipName].join(" ").toLocaleLowerCase().includes(q);
-      return roleMatches && deptMatches && personQueryMatches;
+      return deptMatches && personQueryMatches;
     });
     const cardId = `fln-campus-${String(record.id || record.universityName).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-    const orderedRoles = ROLE_ORDER.map(role => matchingPeople.find(person => person.role === role) || { role });
-    return `<details class="fln-campus-card group overflow-hidden rounded-2xl"><summary class="flex cursor-pointer list-none items-center gap-4 p-4 sm:p-5"><span class="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-teal-50 text-lg text-teal-800"><i class="fa-solid fa-building-columns"></i></span><span class="min-w-0 flex-1"><span class="block text-base font-black text-slate-950 sm:text-lg">${escapeHTML(record.universityName)}</span><span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500"><span><i class="fa-solid fa-location-dot mr-1 text-amber-700"></i>${escapeHTML(record.city || info.location)}</span>${record.fellowshipName ? `<span><i class="fa-solid fa-people-group mr-1 text-teal-700"></i>${escapeHTML(record.fellowshipName)}</span>` : ""}</span></span><span class="ml-1 inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition group-open:rotate-180"><i class="fa-solid fa-chevron-down text-xs"></i></span></summary><div id="${escapeHTML(cardId)}" class="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5">${record.description ? `<p class="mb-3 text-xs leading-5 text-slate-600">${escapeHTML(record.description)}</p>` : ""}<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${orderedRoles.map(person => leaderCard(record, person, person.role)).join("")}</div>${renderBranches(record)}${renderChurchContact(record)}</div></details>`;
+    const roleCards = !record.branches?.length && matchingPeople.length
+      ? `<div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">${matchingPeople.map(person => leaderCard(record, person, person.role || "")).join("")}</div>`
+      : "";
+    return `<details class="fln-campus-card group overflow-hidden rounded-2xl"><summary class="flex cursor-pointer list-none items-center gap-4 p-4 sm:p-5"><span class="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-teal-50 text-lg text-teal-800"><i class="fa-solid fa-building-columns"></i></span><span class="min-w-0 flex-1"><span class="block text-base font-black text-slate-950 sm:text-lg">${escapeHTML(record.universityName)}</span><span class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500"><span><i class="fa-solid fa-location-dot mr-1 text-amber-700"></i>${escapeHTML(record.city || info.location)}</span>${record.fellowshipName ? `<span><i class="fa-solid fa-people-group mr-1 text-teal-700"></i>${escapeHTML(record.fellowshipName)}</span>` : ""}</span></span><span class="ml-1 inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition group-open:rotate-180"><i class="fa-solid fa-chevron-down text-xs"></i></span></summary><div id="${escapeHTML(cardId)}" class="border-t border-slate-100 px-4 pb-4 pt-3 sm:px-5">${record.description ? `<p class="mb-3 text-xs leading-5 text-slate-600">${escapeHTML(record.description)}</p>` : ""}${roleCards}${renderBranches(record)}${renderChurchContact(record)}</div></details>`;
   }
 
   function render() {

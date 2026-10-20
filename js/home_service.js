@@ -5,6 +5,8 @@
  */
 
 import { db } from "./firebase_config.js";
+import { fellowshipUniversityRecords } from "./fellowship_leaders_data.js";
+import { spiritualCategories } from "./academic_data.js";
 import {
   collection,
   onSnapshot,
@@ -51,6 +53,13 @@ const PORTAL_SERVICES = [
     actionKey: "network"
   },
   {
+    title: "Departmental Bible Study Schools",
+    badge: "College-Based Discipleship",
+    icon: "fa-book-bible",
+    description: "Go directly to your college Bible study school and find your department community.",
+    actionKey: "bible-study"
+  },
+  {
     title: "Apostolic & Academic Library",
     badge: "Two Library Rooms",
     icon: "fa-book-bible",
@@ -67,9 +76,10 @@ const PORTAL_SERVICES = [
 ];
 
 let activeHomeUser = null;
-let homeStats = { chapters: null, students: null, leaders: null, resources: null };
+let homeStats = { chapters: null, leaders: null, resources: null };
 let homeStatsStarted = false;
 let homeClockStarted = false;
+let homeStatsSources = { network: false, library: false, error: false };
 
 function escapeHTML(value) {
   return String(value == null ? "" : value).replace(/[&<>"']/g, function (character) {
@@ -209,34 +219,123 @@ function applyHomeStats() {
   document.querySelectorAll("[data-home-stat]").forEach(function (element) {
     const key = element.getAttribute("data-home-stat");
     const value = homeStats[key];
-    element.textContent = value == null ? "—" : formatCount(value);
+    if (value == null) {
+      element.textContent = "—";
+      return;
+    }
+
+    const target = Math.max(0, Math.round(Number(value) || 0));
+    const current = Number(element.dataset.homeCount || 0);
+    if (current === target || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      element.textContent = formatCount(target);
+      element.dataset.homeCount = String(target);
+      return;
+    }
+
+    if (element._homeCountFrame) window.cancelAnimationFrame(element._homeCountFrame);
+    const startedAt = performance.now();
+    const duration = 560;
+    const animate = function (now) {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      element.textContent = formatCount(Math.round(current + (target - current) * eased));
+      if (progress < 1) element._homeCountFrame = window.requestAnimationFrame(animate);
+      else {
+        element.dataset.homeCount = String(target);
+        element._homeCountFrame = 0;
+      }
+    };
+    element._homeCountFrame = window.requestAnimationFrame(animate);
   });
 }
 
+function normalizeCountKey(value) {
+  return String(value || "").trim().toLocaleLowerCase().normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "");
+}
+
+function sameUniversity(left, right) {
+  const a = normalizeCountKey(left);
+  const b = normalizeCountKey(right);
+  return Boolean(
+    a && b && (
+      a === b || (
+        Math.min(a.length, b.length) >= 10 &&
+        (a.includes(b) || b.includes(a))
+      )
+    )
+  );
+}
+
+function countUniversities(rows) {
+  const names = [];
+  rows.forEach(function (row) {
+    const name = String(row.universityName || row.name || "").trim();
+    if (!name || row.active === false) return;
+    if (!names.some(function (known) { return sameUniversity(known, name); })) names.push(name);
+  });
+  return names.length;
+}
+
 function countNamedLeaders(rows) {
-  return rows.reduce(function (total, row) {
-    if (row.active === false) return total;
+  const leaders = new Set();
+  rows.forEach(function (row) {
+    if (!row || row.active === false) return;
+    const campusKey = normalizeCountKey(row.universityName || row.name || row.id);
+    const addLeader = function (leader, branchName) {
+      if (!leader) return;
+      const name = String(leader.fullName || leader.name || leader).trim();
+      const nameKey = normalizeCountKey(name);
+      if (nameKey) leaders.add(campusKey + "|" + normalizeCountKey(branchName) + "|" + nameKey);
+    };
+    (Array.isArray(row.leaders) ? row.leaders : []).forEach(function (leader) { addLeader(leader, ""); });
+    (Array.isArray(row.branches) ? row.branches : []).forEach(function (branch) {
+      (Array.isArray(branch.leaders) ? branch.leaders : []).forEach(function (leader) { addLeader(leader, branch.name || ""); });
+    });
+    [row.astebabariName, row.genzebYazhName, row.tsehafiName].forEach(function (name) {
+      if (String(name || "").trim()) addLeader(name, "");
+    });
+  });
+  return leaders.size;
+}
 
-    if (Array.isArray(row.leaders)) {
-      return total + row.leaders.filter(function (leader) {
-        return leader && String(leader.fullName || leader.name || "").trim().length > 0;
-      }).length;
-    }
+function seededLibraryTitles() {
+  return spiritualCategories.flatMap(function (category) {
+    return (category.pdfs || []).map(function (resource) { return resource.title || ""; });
+  }).filter(Boolean);
+}
 
-    const namedFields = [
-      row.astebabariName,
-      row.genzebYazhName,
-      row.tsehafiName
-    ];
-    return total + namedFields.filter(function (name) {
-      return String(name || "").trim().length > 0;
-    }).length;
-  }, 0);
+function countLibraryResources(liveRows = []) {
+  const titles = new Set(seededLibraryTitles().map(normalizeCountKey).filter(Boolean));
+  liveRows.forEach(function (row) {
+    if (!row || row.active === false) return;
+    const title = normalizeCountKey(row.title || row.name || row.id);
+    if (title) titles.add(title);
+  });
+  return titles.size;
+}
+
+function updateHomeStatsStatus() {
+  const status = document.getElementById("home-stats-status");
+  if (!status) return;
+  if (homeStatsSources.error) {
+    status.innerHTML = '<span class="mr-2 inline-block h-2 w-2 rounded-full bg-amber-300"></span>Using available records · live sync unavailable';
+  } else if (homeStatsSources.network && homeStatsSources.library) {
+    status.innerHTML = '<span class="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-300"></span>Live network updates';
+  } else {
+    status.innerHTML = '<span class="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-sky-300"></span>Connecting to live records';
+  }
 }
 
 function startHomeStats() {
   if (homeStatsStarted) return;
   homeStatsStarted = true;
+
+  homeStats.chapters = countUniversities(fellowshipUniversityRecords);
+  homeStats.leaders = countNamedLeaders(fellowshipUniversityRecords);
+  homeStats.resources = countLibraryResources();
+  applyHomeStats();
+  updateHomeStatsStatus();
 
   const publicLeaders = query(
     collection(db, "siteContent", "leaders", "items"),
@@ -250,14 +349,14 @@ function startHomeStats() {
       })
       .filter(function (record) { return record.active !== false; });
 
-    homeStats.chapters = records.length;
-    homeStats.students = records.reduce(function (total, record) {
-      const members = Number(record.activeMembers);
-      return total + (Number.isFinite(members) && members > 0 ? members : 0);
-    }, 0);
-    homeStats.leaders = countNamedLeaders(records);
+    homeStats.chapters = countUniversities([...fellowshipUniversityRecords, ...records]);
+    homeStats.leaders = countNamedLeaders([...fellowshipUniversityRecords, ...records]);
+    homeStatsSources.network = true;
     applyHomeStats();
+    updateHomeStatsStatus();
   }, function (error) {
+    homeStatsSources.error = true;
+    updateHomeStatsStatus();
     console.error("Could not load published fellowship totals:", error);
   });
 
@@ -267,11 +366,16 @@ function startHomeStats() {
   );
 
   onSnapshot(publicResources, function (snapshot) {
-    homeStats.resources = snapshot.docs.filter(function (document) {
-      return document.data().active !== false;
-    }).length;
+    const records = snapshot.docs.map(function (document) {
+      return Object.assign({ id: document.id }, document.data());
+    });
+    homeStats.resources = countLibraryResources(records);
+    homeStatsSources.library = true;
     applyHomeStats();
+    updateHomeStatsStatus();
   }, function (error) {
+    homeStatsSources.error = true;
+    updateHomeStatsStatus();
     console.error("Could not load published library totals:", error);
   });
 }
@@ -298,7 +402,7 @@ function renderServiceCard(service) {
     + '    <h3 class="mb-2 break-words text-xl font-bold text-slate-900 transition group-hover:text-teal-700">' + escapeHTML(service.title) + '</h3>'
     + '    <p class="mb-6 text-sm leading-relaxed text-slate-600">' + escapeHTML(service.description) + '</p>'
     + '  </div>'
-    + '  <button type="button" data-action-key="' + escapeHTML(service.actionKey) + '" class="btn-hub-nav-trigger flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3 text-xs font-bold text-white transition hover:bg-teal-700">'
+    + '  <button type="button" data-action-key="' + escapeHTML(service.actionKey) + '" ' + (service.actionKey === "bible-study" ? 'data-open-campus-bible-study ' : '') + 'class="btn-hub-nav-trigger flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-3 text-xs font-bold text-white transition hover:bg-teal-700">'
     + '    <span>Open Hub</span><i class="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-1"></i>'
     + '  </button>'
     + '</article>';
@@ -315,7 +419,6 @@ export function renderHomeSection(containerId = "app-dashboard", user = null) {
   const dates = getAutomatedTimeAndDate();
   const statCards = [
     { key: "chapters", label: "Fellowship chapters", icon: "fa-building-columns", colorClass: "bg-teal-50 text-teal-700" },
-    { key: "students", label: "Active members", icon: "fa-users", colorClass: "bg-amber-50 text-amber-700" },
     { key: "leaders", label: "Current leaders", icon: "fa-user-group", colorClass: "bg-indigo-50 text-indigo-700" },
     { key: "resources", label: "Library resources", icon: "fa-book-open", colorClass: "bg-emerald-50 text-emerald-700" }
   ];
@@ -330,14 +433,15 @@ export function renderHomeSection(containerId = "app-dashboard", user = null) {
     + '    </div>'
     + '    <div id="home-date-line" class="min-w-0 break-words text-xs text-slate-300">' + escapeHTML(dates.gregorianDate + "  ·  " + dates.ethiopianDate) + '</div>'
     + '  </div>'
-    + '  <section class="relative isolate overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-teal-950 to-slate-900 px-6 py-9 text-white shadow-2xl sm:px-10 sm:py-12">'
-    + '    <div aria-hidden="true" class="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-teal-400/10 blur-3xl"></div>'
-    + '    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-amber-400/10 blur-3xl"></div>'
-    + '    <div class="relative z-10 max-w-3xl">'
-    + '      <p id="home-greeting-context" class="mb-4 inline-flex max-w-full flex-wrap items-center rounded-full border border-teal-400/20 bg-teal-400/10 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-teal-200 sm:text-xs"></p>'
-    + '      <h1 id="home-greeting-title" class="mb-4 max-w-full break-words text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl"></h1>'
-    + '      <p class="mb-8 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">Uniting and empowering Apostolic students across public and private universities and colleges in Ethiopia through pastoral teaching, spiritual literature, worship networks, and academic mentorship.</p>'
-    + '      <div class="flex flex-wrap items-center gap-3">'
+    + '  <section class="home-hero-section relative isolate min-h-[30rem] overflow-hidden rounded-[2rem_3rem_2rem_4rem] border border-white/10 bg-gradient-to-br from-[#102b2b] via-teal-950 to-slate-950 px-6 py-10 text-white shadow-2xl sm:px-10 sm:py-12">'
+    + '    <div aria-hidden="true" class="home-hero-copy-shade pointer-events-none absolute inset-0 z-0"></div>'
+    + '    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-16 z-0 h-72 w-72 rounded-full bg-amber-400/10 blur-3xl"></div>'
+    + '    <img class="home-hero-art pointer-events-none absolute inset-0 z-0 h-full w-full object-cover" src="https://images.pexels.com/photos/5676678/pexels-photo-5676678.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=2000" alt="" aria-hidden="true" fetchpriority="high">'
+    + '    <div class="relative z-10 mx-auto w-full max-w-5xl text-center">'
+    + '      <p id="home-greeting-context" class="mx-auto mb-5 inline-flex max-w-full flex-wrap items-center justify-center rounded-full border border-teal-200/30 bg-slate-950/35 px-4 py-2 text-[10px] font-extrabold uppercase tracking-[.2em] text-teal-100 shadow-[0_8px_30px_rgba(0,0,0,.42)] backdrop-blur-sm sm:text-xs"></p>'
+    + '      <h1 id="home-greeting-title" class="mx-auto mb-5 max-w-5xl break-words text-balance text-4xl font-black leading-[1.02] tracking-[-.045em] text-white drop-shadow-[0_6px_26px_rgba(0,0,0,.9)] sm:text-5xl md:text-6xl lg:text-7xl"></h1>'
+    + '      <p class="mx-auto mb-8 max-w-4xl text-balance text-base font-medium leading-7 text-white drop-shadow-[0_4px_20px_rgba(0,0,0,.88)] sm:text-lg sm:leading-8">Welcome home. Grow in faith, study Scripture, and build lasting friendships with Apostolic students across Ethiopia.</p>'
+    + '      <div class="flex flex-wrap items-center justify-center gap-3">'
     + '        <button id="hero-cta-network" type="button" class="flex max-w-full items-center gap-2 rounded-2xl bg-teal-600 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/30 transition hover:bg-teal-500"><i class="fa-solid fa-network-wired shrink-0 text-amber-300"></i><span>Explore Campus Network</span></button>'
     + '        <button id="hero-cta-library" type="button" class="flex max-w-full items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3.5 text-left text-xs font-bold uppercase tracking-wide text-white transition hover:bg-white/20"><i class="fa-solid fa-book-open shrink-0 text-teal-200"></i><span>Open Library</span></button>'
     + '      </div>'
@@ -351,7 +455,12 @@ export function renderHomeSection(containerId = "app-dashboard", user = null) {
     + '    <h2 class="mb-2 break-words text-xl font-black text-slate-900 sm:text-2xl">' + escapeHTML(verse.verse) + '</h2>'
     + '    <p class="max-w-3xl text-sm italic leading-relaxed text-slate-700 sm:text-base">“' + escapeHTML(verse.text) + '”</p>'
     + '  </section>'
-    + '  <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Live fellowship totals">'
+    + '  <section aria-labelledby="home-fellowship-overview-title">'
+    + '    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">'
+    + '      <div><p class="text-[10px] font-extrabold uppercase tracking-[.18em] text-teal-700">ACE-USF at a glance</p><h2 id="home-fellowship-overview-title" class="mt-1 text-2xl font-black tracking-tight text-slate-900">Fellowship Overview</h2></div>'
+    + '      <p id="home-stats-status" role="status" aria-live="polite" class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold text-slate-600 shadow-sm"><span class="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-sky-300"></span>Connecting to live records</p>'
+    + '    </div>'
+    + '    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3" aria-label="Live university, leader, and library totals">'
     +       statCards.map(function (card) {
               return ''
                 + '<article class="flex min-w-0 items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">'
@@ -359,6 +468,7 @@ export function renderHomeSection(containerId = "app-dashboard", user = null) {
                 + '  <div class="min-w-0"><p data-home-stat="' + card.key + '" class="text-2xl font-extrabold tracking-tight text-slate-900">—</p><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:text-xs">' + card.label + '</p></div>'
                 + '</article>';
             }).join("")
+    + '    </div>'
     + '  </section>'
     + '  <section>'
     + '    <div class="mb-5">'

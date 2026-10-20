@@ -476,8 +476,12 @@ export function setupLibraryModal() {
   modal.dataset.libraryInitialized = "true";
   modal.setAttribute("aria-hidden", "true");
   modal.setAttribute("aria-label", "Apostolic Library");
-  dialog.classList.remove("max-w-2xl", "max-h-[90vh]");
-  dialog.classList.add("w-full", "max-w-7xl", "h-[92vh]");
+  dialog.classList.remove("max-w-2xl", "max-w-7xl", "max-h-[90vh]", "h-[92vh]", "rounded-3xl");
+  dialog.classList.add("w-screen", "max-w-none", "h-screen", "max-h-none", "rounded-none", "library-fullscreen-dialog");
+  body.classList.remove("space-y-4");
+  body.classList.add("library-modal-body");
+  body.tabIndex = 0;
+  body.setAttribute("aria-label", "Library content. Scroll to explore the room and resources.");
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-modal", "true");
   dialog.setAttribute("aria-label", "Apostolic Library");
@@ -487,7 +491,13 @@ export function setupLibraryModal() {
   body.insertAdjacentHTML("afterbegin", `
     <section id="library-lobby" class="relative isolate overflow-hidden rounded-[1.75rem] p-5 text-slate-900 sm:p-8 lg:p-10">
       <figure class="library-lobby-banner -mx-5 -mt-5 mb-7 sm:-mx-8 sm:-mt-8 lg:-mx-10 lg:-mt-10">
-        <img src="./assets/apostolic-library-lobby.jpg" alt="Apostolic Library reading room with bookshelves, study tables, Scripture, and book collections" loading="eager" fetchpriority="high">
+        <img src="./assets/apostolic-library-lobby.jpg" alt="Warm, welcoming digital library reading room" loading="eager" fetchpriority="high">
+        <div class="library-banner-shade" aria-hidden="true"></div>
+        <div class="library-banner-content">
+          <div class="library-banner-copy"><span class="library-banner-eyebrow"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> ACE-USF · Digital Library</span><h2>Open a world of wisdom</h2><p>Scripture, spiritual growth, and learning—together in one place.</p><div class="library-banner-tags"><span><i class="fa-solid fa-book-bible" aria-hidden="true"></i> Scripture</span><span><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> Study</span><span><i class="fa-solid fa-heart" aria-hidden="true"></i> Growth</span></div></div>
+          <div class="library-banner-emblem" aria-hidden="true"><span class="library-banner-orbit"></span><span class="library-banner-book"><i class="fa-solid fa-book-open-reader"></i></span><small>READ · REFLECT · GROW</small></div>
+        </div>
+        <figcaption class="sr-only">ACE-USF Digital Library: Scripture, spiritual growth, and learning.</figcaption>
       </figure>
       <div class="library-lobby-glow" aria-hidden="true"></div>
       <div class="relative mx-auto max-w-6xl">
@@ -499,7 +509,7 @@ export function setupLibraryModal() {
         <div class="mt-8 grid gap-6 lg:grid-cols-[1.15fr_.85fr] lg:items-end">
           <div>
             <p id="library-welcome-name" class="text-[10px] font-extrabold uppercase tracking-[.24em] text-amber-800">Welcome to the library</p>
-            <h1 class="library-display mt-2 max-w-3xl text-3xl font-semibold leading-[1.08] tracking-tight text-emerald-950 sm:text-5xl">THE APOSTOLIC<br class="hidden sm:block"> LIBRARY</h1>
+            <h1 class="library-display mt-2 max-w-3xl text-3xl font-semibold leading-[1.08] tracking-tight text-emerald-950 sm:text-5xl">A place to read, reflect, and grow</h1>
             <p class="library-display mt-4 text-base italic text-amber-900 sm:text-lg">“Rooted in the Word. Growing in Wisdom. Walking in the Spirit.”</p>
             <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-700 sm:text-base">Welcome to a peaceful place to study Scripture, explore spiritual books, gain wisdom, and grow in faith. Choose a room to begin, or search the library collections.</p>
           </div>
@@ -541,7 +551,7 @@ export function setupLibraryModal() {
   const lobbySearchInput = document.getElementById("library-lobby-search-input");
   const roomToolbar = document.createElement("div");
   roomToolbar.id = "library-room-toolbar";
-  roomToolbar.className = "hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between";
+  roomToolbar.className = "hidden library-room-toolbar";
   roomToolbar.innerHTML = `
     <div class="flex items-center gap-3">
       <button id="library-back-to-lobby" type="button" class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-600">
@@ -576,12 +586,38 @@ export function setupLibraryModal() {
 
   const roomStyle = document.createElement("style");
   roomStyle.textContent = `
+    #library-modal { padding:0!important; background:rgba(5,13,22,.76); }
+    #library-modal > .library-fullscreen-dialog { width:100vw; max-width:none; height:100vh; height:100dvh; max-height:100vh; max-height:100dvh; border:0; border-radius:0; }
+    #library-modal .library-modal-header { min-height:76px; padding-inline:clamp(1rem,3vw,2.75rem); }
+    #library-modal .library-modal-body { display:flex; min-height:0; height:0; flex:1 1 0%; flex-direction:column; gap:1.4rem; overflow-x:hidden!important; overflow-y:auto!important; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; scrollbar-gutter:stable; padding:clamp(1rem,3vw,3rem)!important; background:radial-gradient(ellipse at 90% 0%,rgba(196,214,199,.25),transparent 34%),linear-gradient(145deg,#f8f7f1,#eef2ef 52%,#f1f5f7); }
+    #library-modal .library-modal-body::-webkit-scrollbar { width:11px; }
+    #library-modal .library-modal-body::-webkit-scrollbar-track { border-radius:999px; background:rgba(15,45,39,.06); }
+    #library-modal .library-modal-body::-webkit-scrollbar-thumb { border:3px solid transparent; border-radius:999px; background:rgba(30,83,67,.45); background-clip:padding-box; }
+    #library-modal .library-modal-body > :not(style) { flex:0 0 auto; }
+    #library-modal .library-modal-body:focus-visible { outline:3px solid rgba(232,199,121,.85); outline-offset:-4px; }
+    #library-modal .library-modal-body > #library-lobby,#library-modal .library-modal-body > #library-room-toolbar,#library-modal .library-modal-body > #library-room-scene,#library-modal .library-modal-body > #library-search-input,#library-modal .library-modal-body > #library-catalog-results { width:100%; max-width:1600px; margin-inline:auto; }
+    @media(max-width:640px) { #library-modal .library-modal-header { padding:1rem 3.6rem 1rem 1rem; } #library-modal .library-modal-body { gap:1rem; padding:1rem!important; } }
     #library-modal #library-lobby { background:linear-gradient(145deg,#faf8f1 0%,#f3eee1 55%,#f8f5ec 100%); box-shadow:inset 0 0 0 1px rgba(91,65,33,.12),0 24px 70px rgba(34,48,37,.12); }
     #library-modal .library-lobby-banner { position:relative; overflow:hidden; border:1px solid rgba(255,255,255,.72); border-top:0; border-radius:0 0 1.35rem 1.35rem; box-shadow:0 18px 44px rgba(19,37,42,.2),inset 0 1px rgba(255,255,255,.6); animation:library-room-enter .75s cubic-bezier(.2,.7,.2,1) both; }
     #library-modal .library-lobby-banner img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; object-position:center; transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .5s ease; }
     #library-modal .library-lobby-banner:hover img { transform:scale(1.02); filter:saturate(1.04); }
+    #library-modal .library-lobby-banner { isolation:isolate; aspect-ratio:16/6.2; min-height:270px; border-radius:0 0 1.5rem 1.5rem; background:#102c26; }
+    #library-modal .library-lobby-banner img { position:absolute; inset:0; z-index:-2; width:100%; height:100%; aspect-ratio:auto; object-position:center 48%; filter:saturate(.9); }
+    #library-modal .library-banner-shade { position:absolute; z-index:-1; inset:0; background:linear-gradient(90deg,rgba(7,28,23,.93) 0%,rgba(8,38,31,.77) 48%,rgba(8,38,31,.17) 100%),linear-gradient(0deg,rgba(5,24,19,.52),transparent 60%); }
+    #library-modal .library-banner-content { position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:clamp(1.25rem,4vw,3.5rem); color:#fff; }
+    #library-modal .library-banner-copy { max-width:48rem; }
+    #library-modal .library-banner-eyebrow { display:inline-flex; align-items:center; gap:.55rem; border:1px solid rgba(246,219,155,.46); border-radius:999px; background:rgba(9,40,32,.46); padding:.55rem .9rem; color:#f4d990; font-size:.65rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; backdrop-filter:blur(12px); }
+    #library-modal .library-banner-copy h2 { margin-top:1.1rem; color:#fff; font-size:clamp(1.9rem,4.5vw,4rem); font-weight:900; line-height:1.03; letter-spacing:-.045em; text-shadow:0 3px 24px rgba(0,0,0,.24); }
+    #library-modal .library-banner-copy p { margin-top:.85rem; max-width:34rem; color:rgba(255,255,255,.88); font-size:clamp(.85rem,1.4vw,1.05rem); line-height:1.6; }
+    #library-modal .library-banner-tags { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.25rem; }
+    #library-modal .library-banner-tags span { display:inline-flex; align-items:center; gap:.45rem; border:1px solid rgba(255,255,255,.2); border-radius:999px; background:rgba(255,255,255,.11); padding:.45rem .72rem; color:#fff; font-size:.68rem; font-weight:750; backdrop-filter:blur(10px); }
+    #library-modal .library-banner-tags i { color:#f4d990; }
+    #library-modal .library-banner-emblem { position:relative; display:flex; width:clamp(130px,18vw,220px); aspect-ratio:1; flex:none; align-items:center; justify-content:center; border:1px solid rgba(246,219,155,.42); border-radius:50%; background:radial-gradient(circle,rgba(239,201,116,.2),rgba(255,255,255,.05) 58%,transparent 60%); box-shadow:0 0 80px rgba(225,187,100,.18),inset 0 0 35px rgba(255,255,255,.08); }
+    #library-modal .library-banner-orbit { position:absolute; inset:9%; border:1px solid rgba(255,255,255,.3); border-radius:50%; transform:rotate(-28deg) scaleY(.52); }
+    #library-modal .library-banner-book { display:grid; width:46%; aspect-ratio:1; place-items:center; border:1px solid rgba(255,255,255,.38); border-radius:28%; background:linear-gradient(145deg,#f2d68f,#a77331); color:#173d31; font-size:clamp(1.8rem,4vw,3.2rem); box-shadow:0 15px 35px rgba(0,0,0,.28); }
+    #library-modal .library-banner-emblem small { position:absolute; bottom:12%; color:#fff4d3; font-size:.48rem; font-weight:900; letter-spacing:.16em; text-align:center; }
+    @media(max-width:640px) { #library-modal .library-lobby-banner { aspect-ratio:4/3; min-height:310px; } #library-modal .library-banner-content { align-items:flex-end; padding:1.2rem; } #library-modal .library-banner-copy { max-width:100%; } #library-modal .library-banner-emblem { position:absolute; top:1rem; right:1rem; width:84px; opacity:.9; } #library-modal .library-banner-emblem small { display:none; } #library-modal .library-banner-tags { gap:.35rem; margin-top:.85rem; } #library-modal .library-banner-tags span { padding:.4rem .58rem; font-size:.6rem; } }
     @media (prefers-reduced-motion:reduce) { #library-modal .library-lobby-banner,#library-modal .library-lobby-banner img { animation:none; transition:none; } }
-    #library-modal .library-lobby-banner img { display:block; width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; object-position:center; }
     #library-modal .library-lobby-glow { position:absolute; inset:0; z-index:-1; pointer-events:none; background:radial-gradient(ellipse at 83% 10%,rgba(209,177,106,.2),transparent 35%),radial-gradient(ellipse at 2% 86%,rgba(51,99,73,.09),transparent 34%); }
     #library-modal .library-modal-header { background:linear-gradient(100deg,#173e32,#0c2d25)!important; border-color:rgba(229,198,130,.22)!important; }
     #library-modal .library-modal-header > div:first-child { color:#faf7ee; }
@@ -605,6 +641,37 @@ export function setupLibraryModal() {
     @media (prefers-reduced-motion:reduce) { #library-modal .library-room-photo.library-modest-reader img { animation:none; } }
     #library-modal .library-room-photo img { display:block; width:100%; height:100%; min-height:260px; object-fit:cover; object-position:center 52%; transition:transform 1.2s cubic-bezier(.2,.7,.2,1),filter .5s ease; }
     #library-modal .library-room-photo:hover img { transform:scale(1.025); filter:saturate(1.06) contrast(1.02); }
+    #library-modal .library-room-photo.library-spiritual-banner,#library-modal .library-room-photo.library-academic-banner { position:relative; isolation:isolate; min-height:340px; aspect-ratio:16/6.5; overflow:hidden; border:1px solid rgba(255,255,255,.7); border-radius:3rem 2rem 5.4rem 2.4rem; background:#102c26; box-shadow:0 30px 76px rgba(13,36,44,.28),inset 0 1px rgba(255,255,255,.45); }
+    #library-modal .library-room-photo.library-spiritual-banner img,#library-modal .library-room-photo.library-academic-banner img { position:absolute; inset:0; z-index:-2; width:100%; height:100%; min-height:0; object-fit:cover; filter:brightness(.94) saturate(1.06) contrast(1.04); transition:transform 1.1s cubic-bezier(.2,.7,.2,1),filter .5s ease; }
+    #library-modal .library-room-photo.library-spiritual-banner img { object-position:center 48%; }
+    #library-modal .library-room-photo.library-academic-banner img { object-position:center 52%; }
+    #library-modal .library-room-photo.library-spiritual-banner:hover img,#library-modal .library-room-photo.library-academic-banner:hover img { transform:scale(1.035); filter:brightness(.98) saturate(1.12) contrast(1.05); }
+    #library-modal .library-room-photo.library-spiritual-banner::before,#library-modal .library-room-photo.library-academic-banner::before { content:""; position:absolute; z-index:-1; inset:0; pointer-events:none; }
+    #library-modal .library-room-photo.library-spiritual-banner::before { background:radial-gradient(ellipse at 82% 12%,rgba(230,192,109,.1),transparent 30%),linear-gradient(90deg,rgba(5,24,17,.38),rgba(7,34,25,.2) 42%,rgba(8,39,30,0) 78%),linear-gradient(0deg,rgba(5,20,15,.12),transparent 68%); }
+    #library-modal .library-room-photo.library-academic-banner::before { background:radial-gradient(ellipse at 82% 12%,rgba(110,206,236,.12),transparent 31%),linear-gradient(90deg,rgba(5,20,37,.38),rgba(8,37,58,.2) 43%,rgba(9,43,66,0) 79%),linear-gradient(0deg,rgba(5,19,32,.12),transparent 68%); }
+    #library-modal .library-room-banner-content { position:absolute; z-index:2; inset:0; display:flex; align-items:center; justify-content:space-between; gap:2rem; padding:clamp(1.35rem,4vw,3.5rem); color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.95),0 8px 26px rgba(0,0,0,.7); }
+    #library-modal .library-room-banner-copy { max-width:48rem; padding:1.2rem clamp(1rem,2.2vw,2rem) 1.35rem 0; border-radius:2rem 3rem 3rem 1rem; background:linear-gradient(100deg,rgba(3,17,14,.42),rgba(3,17,14,.22) 66%,transparent); backdrop-filter:blur(3px); }
+    #library-modal .library-room-banner-eyebrow { display:inline-flex; align-items:center; gap:.55rem; border:1px solid rgba(255,255,255,.28); border-radius:999px; background:rgba(255,255,255,.12); padding:.55rem .9rem; color:#f6dda2; font-size:.64rem; font-weight:900; letter-spacing:.16em; text-transform:uppercase; backdrop-filter:blur(14px); }
+    #library-modal .library-room-banner-copy h2 { margin-top:1rem; max-width:14ch; color:#fff; font-size:clamp(2rem,4.7vw,4.15rem); font-weight:900; line-height:1.02; letter-spacing:-.045em; text-wrap:balance; -webkit-text-stroke:.15px rgba(0,0,0,.2); }
+    #library-modal .library-room-banner-copy p { margin-top:.85rem; max-width:36rem; color:#fff; font-size:clamp(.9rem,1.45vw,1.08rem); font-weight:550; line-height:1.65; }
+    #library-modal .library-room-banner-mark { display:grid; width:clamp(100px,15vw,174px); aspect-ratio:1; flex:none; place-items:center; border:1px solid rgba(255,255,255,.35); border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.2),rgba(255,255,255,.04) 62%,transparent 64%); box-shadow:0 0 70px rgba(255,255,255,.12),inset 0 0 24px rgba(255,255,255,.08); color:#f6dda2; font-size:clamp(2.2rem,5vw,4rem); }
+    #library-modal .library-room-banner-mark i { display:grid; width:58%; aspect-ratio:1; place-items:center; border:1px solid rgba(255,255,255,.36); border-radius:30%; background:linear-gradient(145deg,rgba(246,221,162,.95),rgba(182,132,54,.94)); color:#15372d; box-shadow:0 14px 32px rgba(0,0,0,.28); }
+    #library-modal .library-room-banner-badge { position:absolute; right:clamp(1.1rem,3vw,2rem); bottom:clamp(1.1rem,3vw,2rem); border:1px solid rgba(255,255,255,.25); border-radius:999px; background:rgba(255,255,255,.13); padding:.55rem .85rem; color:#fff; font-size:.64rem; font-weight:850; letter-spacing:.08em; backdrop-filter:blur(12px); }
+    #library-modal .library-spiritual-shell { border-radius:2rem 2rem 4rem 2rem; background:radial-gradient(ellipse at 100% 0%,rgba(209,177,106,.16),transparent 36%),linear-gradient(145deg,#faf8f1,#f0eadc 78%); box-shadow:0 18px 55px rgba(34,48,37,.1); }
+    #library-modal .library-academic-shell { border-radius:2rem 2rem 4rem 2rem; background:radial-gradient(ellipse at 100% 0%,rgba(56,142,180,.15),transparent 36%),linear-gradient(145deg,#f2f8fb,#e8f0f5 78%); box-shadow:0 18px 55px rgba(22,53,76,.1); }
+    #library-modal .library-room-toolbar:not(.hidden) { display:flex; align-items:center; justify-content:space-between; gap:1rem; width:100%; padding:1rem clamp(1rem,2vw,1.75rem); border:1px solid rgba(255,255,255,.74); border-radius:1.3rem 1.3rem 2.6rem 1.3rem; background:rgba(255,255,255,.68); box-shadow:0 14px 38px rgba(24,49,57,.08); backdrop-filter:blur(18px); }
+    #library-modal #library-back-to-lobby { border:0; border-radius:999px 999px 999px 1rem; background:linear-gradient(145deg,#fff,#eaf2ee); box-shadow:0 5px 14px rgba(23,54,44,.1); }
+    #library-modal .library-room-shell { padding:clamp(1rem,2.4vw,2.4rem)!important; border:0; box-shadow:none; }
+    #library-modal .library-room-shell .library-modern-shelf { overflow:visible; border:1px solid rgba(255,255,255,.84); border-radius:1.8rem 1.8rem 3.4rem 1.8rem; background:rgba(255,255,255,.56); box-shadow:0 18px 48px rgba(28,54,65,.075); backdrop-filter:blur(16px); }
+    #library-modal .library-room-shell .library-study-card { border:1px solid rgba(255,255,255,.92); border-radius:1.2rem 1.2rem 2.2rem 1.2rem; background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(255,255,255,.56)); box-shadow:0 10px 24px rgba(25,54,48,.06); transition:transform .22s ease,box-shadow .22s ease; }
+    #library-modal .library-room-shell .library-study-card:hover { transform:translateY(-3px); box-shadow:0 16px 34px rgba(25,54,48,.1); }
+    #library-modal .library-room-shell .library-shelf-choice { border:1px solid rgba(255,255,255,.92); border-radius:1.2rem 1.2rem 2.2rem 1.2rem; background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,249,246,.82)); box-shadow:0 9px 25px rgba(23,54,44,.075); }
+    #library-modal .library-room-shell .library-shelf-choice:hover { border-color:color-mix(in srgb,var(--shelf-accent) 42%,white); box-shadow:0 18px 34px rgba(23,54,44,.14); }
+    #library-modal .library-room-shell .library-book-card,#library-modal .library-room-shell .library-resource-card,#library-modal .library-room-shell .library-collection-card { overflow:hidden; border:1px solid rgba(255,255,255,.88); border-radius:1.15rem 1.15rem 2rem 1.15rem; background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(247,249,247,.83)); box-shadow:0 10px 28px rgba(20,44,50,.08); }
+    #library-modal .library-room-shell .library-book-card:hover,#library-modal .library-room-shell .library-resource-card:hover { box-shadow:0 20px 42px rgba(20,55,60,.14); }
+    #library-modal .library-room-shell input,#library-modal .library-room-shell select { border:1px solid rgba(75,103,112,.18); border-radius:999px; background:rgba(255,255,255,.8); box-shadow:0 6px 20px rgba(25,54,60,.045); }
+    #library-modal .library-room-shell input:focus,#library-modal .library-room-shell select:focus { outline:2px solid rgba(39,123,104,.3); outline-offset:2px; }
+    @media(max-width:640px) { #library-modal .library-room-toolbar:not(.hidden) { align-items:flex-start; flex-direction:column; border-radius:1.1rem 1.1rem 2.1rem 1.1rem; } }
     #library-modal .library-photo-fallback:not(.hidden) { display:flex; min-height:inherit; align-items:center; justify-content:center; background:radial-gradient(ellipse at 50% 5%,rgba(244,218,161,.7),transparent 58%),linear-gradient(135deg,#264d3d,#17382f 60%,#392c1e); color:#fff; text-align:center; }
     #library-modal .library-photo-caption { position:absolute; z-index:2; left:clamp(1rem,3vw,2rem); right:clamp(1rem,3vw,2rem); bottom:clamp(1rem,3vw,1.7rem); display:flex; flex-wrap:wrap; align-items:end; justify-content:space-between; gap:.75rem; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.3); }
     #library-modal .library-room-photo::after { content:""; position:absolute; inset:30% 0 0; background:linear-gradient(180deg,transparent 0%,rgba(7,19,24,.75) 100%); pointer-events:none; }
@@ -636,6 +703,7 @@ export function setupLibraryModal() {
     #library-modal .library-resource-card:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(15,23,42,.09); }
     @keyframes library-room-enter { from { opacity:0; transform:translateY(12px) scale(.99); } to { opacity:1; transform:translateY(0) scale(1); } }
     @media (max-width:640px) { #library-modal .library-room-photo { min-height:220px; aspect-ratio:4/3; } #library-modal .library-room-photo img { min-height:220px; object-position:center 44%; } }
+    @media(max-width:640px) { #library-modal .library-room-photo.library-spiritual-banner,#library-modal .library-room-photo.library-academic-banner { min-height:390px; aspect-ratio:4/5; border-radius:2.2rem 1.5rem 3.7rem 1.8rem; } #library-modal .library-room-banner-content { align-items:flex-end; padding:1.35rem; } #library-modal .library-room-banner-copy { max-width:100%; padding:1rem .85rem 3.2rem 0; background:linear-gradient(0deg,rgba(3,17,14,.62),rgba(3,17,14,.3) 76%,transparent); } #library-modal .library-room-banner-copy h2 { max-width:12ch; font-size:clamp(2rem,9vw,3.1rem); } #library-modal .library-room-banner-mark { position:absolute; top:1.2rem; right:1.2rem; width:78px; opacity:.92; } #library-modal .library-room-banner-badge { right:auto; left:1.35rem; bottom:1.25rem; } }
     @media (prefers-reduced-motion: reduce) { #library-modal #library-room-scene { animation:none; } #library-modal .library-book-card,#library-modal .library-resource-card,#library-modal .library-room-photo img,#library-modal .library-room-choice { transition:none; } }
   `;
   body.prepend(roomStyle);
@@ -796,15 +864,11 @@ export function setupLibraryModal() {
 
     if (room === "spiritual") {
       roomScene.innerHTML = `
-        <section class="library-room-shell relative isolate overflow-hidden rounded-3xl border border-amber-950/10 p-4 shadow-inner sm:p-7">
-          <div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div><p class="text-[9px] font-extrabold uppercase tracking-[.2em] text-amber-800">Apostolic fellowship · shared reading</p><h2 class="library-display mt-1 text-2xl font-semibold text-emerald-950 sm:text-3xl">A Place to Read, Reflect, and Grow</h2><p class="mt-2 max-w-3xl text-sm leading-6 text-slate-700">Settle into a peaceful reading room. Study the Word, explore trusted spiritual literature, and grow alongside others.</p></div>
-            <span class="inline-flex w-fit shrink-0 items-center gap-2 rounded-xl border border-emerald-950/10 bg-white/70 px-3 py-2 text-xs font-semibold text-emerald-950"><i class="fa-solid fa-book-bible text-amber-800" aria-hidden="true"></i> Quiet reading room</span>
-          </div>
-          <figure class="library-room-photo library-modest-reader mb-6" aria-label="Students reading and studying the Bible together outdoors">
+        <section class="library-room-shell library-spiritual-shell relative isolate overflow-hidden p-4 sm:p-7">
+          <figure class="library-room-photo library-modest-reader library-spiritual-banner mb-7" aria-label="Spiritual library banner: read, reflect, and grow">
             <img data-library-photo src="./assets/apostolic-library-spiritual-room.jpg" alt="A group of students reading Bibles together in a peaceful green outdoor setting" loading="lazy">
             <div class="library-photo-fallback" data-library-photo-fallback aria-hidden="true"><div class="px-6"><i class="fa-solid fa-book-open-reader text-3xl text-amber-200" aria-hidden="true"></i><p class="library-display mt-3 text-xl">A quiet place for reading and reflection</p><p class="mt-2 text-xs text-white/75">The reading-room photograph could not be loaded.</p></div></div>
-            <figcaption class="library-photo-caption"><span><span class="block text-[9px] font-extrabold uppercase tracking-[.2em] text-amber-200">Scripture · fellowship · wisdom</span><span class="library-display mt-1 block text-xl font-semibold sm:text-2xl">Read. Reflect. Grow.</span></span><span class="rounded-full border border-white/30 bg-white/15 px-3 py-2 text-[11px] font-semibold backdrop-blur"><i class="fa-solid fa-leaf mr-1 text-emerald-200" aria-hidden="true"></i>Room to reflect</span><span class="text-[10px] text-white/80">Spiritual Room</span></figcaption>
+            <figcaption class="library-room-banner-content"><span class="library-room-banner-copy"><span class="library-room-banner-eyebrow"><i class="fa-solid fa-book-bible" aria-hidden="true"></i> Scripture · stillness · growth</span><h2>A place to meet the Word</h2><p>Explore Scripture, trusted spiritual literature, and thoughtful study in a calm space made for reflection and fellowship.</p></span><span class="library-room-banner-mark" aria-hidden="true"><i class="fa-solid fa-book-open-reader"></i></span><span class="library-room-banner-badge">SPIRITUAL ROOM · READ · REFLECT · GROW</span></figcaption>
           </figure>
           <aside class="mb-6 rounded-2xl border border-amber-900/10 bg-white/75 p-5 sm:p-6">
             <p class="text-[9px] font-extrabold uppercase tracking-[.2em] text-amber-800">A blessing for your study</p>
@@ -835,17 +899,13 @@ export function setupLibraryModal() {
 
     const streamItems = Object.entries(freshmanStreams).map(([id, item]) => ({ id, name: item.name }));
     roomScene.innerHTML = `
-      <section class="library-room-shell relative isolate overflow-hidden rounded-3xl border border-sky-200 bg-gradient-to-br from-slate-100 via-sky-50 to-blue-100 p-4 shadow-inner sm:p-7">
+      <section class="library-room-shell library-academic-shell relative isolate overflow-hidden p-4 sm:p-7">
         <div aria-hidden="true" class="absolute inset-0 -z-10 opacity-50" style="background:radial-gradient(ellipse at 80% 0%,rgba(255,255,255,.95),transparent 52%),linear-gradient(180deg,transparent 72%,rgba(30,64,100,.12))"></div>
-        <figure class="library-room-photo mb-6">
+        <figure class="library-room-photo library-academic-banner mb-7" aria-label="Academic digital library banner for courses and discovery">
           <img data-library-photo src="./assets/apostolic-library-academic-room.jpg" alt="Students studying Scripture and books together at wooden tables in a bright library" loading="lazy">
           <div class="library-photo-fallback" data-library-photo-fallback aria-hidden="true"><div class="px-6"><i class="fa-solid fa-book-open-reader text-3xl text-amber-200" aria-hidden="true"></i><p class="library-display mt-3 text-xl">A quiet room for learning</p><p class="mt-2 text-xs text-white/75">The reading-room photograph could not be loaded.</p></div></div>
-          <figcaption class="library-photo-caption"><span><span class="block text-[10px] font-extrabold uppercase tracking-[.2em] text-sky-200">University study · books & discovery</span><span class="mt-1 block text-lg font-black sm:text-2xl">Find your next idea.</span></span><span class="rounded-full border border-white/30 bg-white/15 px-3 py-2 text-[11px] font-bold backdrop-blur"><i class="fa-solid fa-glass-water mr-1 text-sky-200"></i>Fresh water · open-air comfort</span><span class="text-[10px] text-white/80">Academic Room</span></figcaption>
+          <figcaption class="library-room-banner-content"><span class="library-room-banner-copy"><span class="library-room-banner-eyebrow"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i> University study · knowledge · discovery</span><h2>Learn with purpose. Grow with confidence.</h2><p>Find course pathways, explore your field, and build a stronger study rhythm with resources for university life.</p></span><span class="library-room-banner-mark" aria-hidden="true"><i class="fa-solid fa-lightbulb"></i></span><span class="library-room-banner-badge">ACADEMIC ROOM · EXPLORE · LEARN · CREATE</span></figcaption>
         </figure>
-        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div><p class="text-[10px] font-extrabold uppercase tracking-[.2em] text-sky-800">University study room · Knowledge & discovery</p><h2 class="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Welcome to the Apostolic Academic Digital Library</h2><p class="mt-2 max-w-3xl text-xs leading-5 text-slate-700 sm:text-sm">A place for university students to explore knowledge, strengthen academic foundations, and find learning resources for their studies.</p></div>
-          <div class="flex shrink-0 items-center gap-2 rounded-2xl border border-sky-200 bg-white/75 px-4 py-3 text-xs font-semibold text-sky-950"><i class="fa-solid fa-graduation-cap text-sky-700"></i> Study collections</div>
-        </div>
         <div class="grid gap-4 lg:grid-cols-2">
           <div class="library-modern-shelf rounded-2xl p-4 sm:p-5">
             <div class="mb-4 flex flex-wrap items-end justify-between gap-2"><span><span class="block text-[9px] font-extrabold uppercase tracking-[.18em] text-emerald-800">Start here</span><span class="mt-1 block text-base font-extrabold text-slate-900">Freshman course streams</span></span><span class="text-[11px] text-slate-500">Choose your study stream</span></div>
@@ -880,6 +940,7 @@ export function setupLibraryModal() {
     roomContents.forEach(element => setVisible(element, true));
     updateRoomUI();
     renderCurrentRoom();
+    body.scrollTop = 0;
   }
 
   function returnToLobby() {
@@ -888,6 +949,7 @@ export function setupLibraryModal() {
     setVisible(roomToolbar, false);
     roomTabs?.classList.add("hidden");
     roomContents.forEach(element => setVisible(element, false));
+    body.scrollTop = 0;
   }
 
   function closeLibraryModal() {

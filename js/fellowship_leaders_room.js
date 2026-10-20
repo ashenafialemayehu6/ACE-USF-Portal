@@ -3,7 +3,6 @@
 // weather only when a campus card is opened and verified coordinates are present.
 import { fellowshipUniversityRecords, watchFellowshipUniversityRecords } from "./fellowship_leaders_data.js";
 
-const ROLES = ["Astebabari", "Genzeb Yazh", "Tsehafi"];
 const ROLE_TITLE = {
   Astebabari: "Coordinator አስተባባሪ",
   "Genzeb Yazh": "Treasurer ገንዘብ ያዥ",
@@ -21,17 +20,17 @@ const WORDS = {
     eyebrow: "ACE-USF · UNITED IN FAITH, SERVICE & LEADERSHIP",
     title: "Meet the people serving your campus fellowship.",
     intro: "Explore current campus teams, connect with leaders, learn about their university community, and follow each fellowship’s leadership journey year by year.",
-    campuses: "Campus fellowships", members: "Active fellowship members", leaders: "Current leaders", cities: "Cities represented",
+    campuses: "Campus fellowships", leaders: "Campus contacts", cities: "Cities represented",
     search: "Search university, city, leader, department, or role…", city: "All campus cities", year: "All leadership years",
     directory: "Campus fellowship directory", records: "Verified campus records", emptyTitle: "Campus profiles are being prepared",
     empty: "Verified fellowship and leadership information will appear here as campuses share their approved records.",
     noResults: "No campus matches your search or filters. Try a different term.",
-    membersCount: "Active members", currentTeam: "Current leadership team", serviceHistory: "Leadership service history",
+    currentTeam: "Campus fellowship contacts", serviceHistory: "Leadership service history",
     campusWeather: "Campus weather now", weatherLoading: "Checking current conditions…", weatherUnavailable: "Weather is unavailable right now.",
     weatherLocation: "Verified campus coordinates are needed for local weather.", temperature: "Temperature", feelsLike: "Feels like", humidity: "Humidity", wind: "Wind",
     weatherAttribution: "Weather data by Open-Meteo", updated: "Updated", contact: "Contact on Telegram", contactUnavailable: "Public Telegram contact not listed",
     department: "Department", elected: "Elected", term: "Service term", serviceYear: "Year", of: "of", current: "Current team", previous: "Previous team",
-    profile: "Leader profile", profileEmpty: "No profile summary has been added.", locationMissing: "Campus location not provided", membersMissing: "Member count not reported",
+    profile: "Leader profile", profileEmpty: "No profile summary has been added.", locationMissing: "Campus location not provided",
     termMissing: "Term dates not listed", leadersMissing: "No current leaders have been published for this campus yet.", historyMissing: "No earlier leadership years have been published yet.",
     transition: "Each new election can be added as a new service year. Previous teams remain in this history.",
     back: "Back to portal", privacy: "Profiles and contact details are shown only with approval to publish. Campus counts and election records should be verified by the fellowship.",
@@ -47,13 +46,13 @@ const WORDS = {
     directory: "የግቢ ሕብረት ማውጫ", records: "የተረጋገጡ የግቢ መረጃዎች", emptyTitle: "የግቢ መረጃዎች በዝግጅት ላይ ናቸው",
     empty: "የተረጋገጡ የሕብረትና የአመራር መረጃዎች ከግቢዎች ፈቃድ ጋር ሲደርሱ እዚህ ይታያሉ።",
     noResults: "ከፍለጋው ወይም ከማጣሪያው ጋር የሚዛመድ ግቢ አልተገኘም። ሌላ ቃል ይሞክሩ።",
-    membersCount: "ንቁ አባላት", currentTeam: "የአሁኑ የአመራር ቡድን", serviceHistory: "የአመራር አገልግሎት ታሪክ",
+    currentTeam: "የሕብረት አባላት መገኛ", serviceHistory: "የአመራር አገልግሎት ታሪክ",
     campusWeather: "የአሁኑ የግቢ የአየር ሁኔታ", weatherLoading: "የአሁኑ ሁኔታ እየተፈተሸ ነው…", weatherUnavailable: "የአየር ሁኔታ መረጃ አሁን አልተገኘም።",
     weatherLocation: "የአየር ሁኔታ ለማሳየት የተረጋገጠ የግቢ አቅጣጫ ያስፈልጋል።",
     temperature: "የአየር ሙቀት", feelsLike: "የሚሰማው", humidity: "እርጥበት", wind: "ነፋስ", weatherAttribution: "የአየር መረጃ፦ Open-Meteo", updated: "የተዘመነበት",
     contact: "በቴሌግራም ያግኙ", contactUnavailable: "ይፋዊ የቴሌግራም መረጃ አልተዘረዘረም", department: "ዲፓርትመንት", elected: "የተመረጠበት ዓመት",
     term: "የአገልግሎት ዘመን", serviceYear: "ዓመት", of: "ከ", current: "የአሁኑ ቡድን", previous: "የቀድሞ ቡድን", profile: "የመሪ መገለጫ", profileEmpty: "የመሪ መግለጫ አልተጨመረም።",
-    locationMissing: "የግቢ ቦታ አልተገለጸም", membersMissing: "የአባላት ብዛት አልተዘገበም", termMissing: "የአገልግሎት ቀናት አልተዘረዘሩም",
+    locationMissing: "የግቢ ቦታ አልተገለጸም", termMissing: "የአገልግሎት ቀናት አልተዘረዘሩም",
     leadersMissing: "ለዚህ ግቢ የአሁኑ መሪዎች ገና አልታተሙም።", historyMissing: "ያለፉ የአመራር ዓመታት ገና አልታተሙም።",
     transition: "ከእያንዳንዱ አዲስ ምርጫ በኋላ አዲሱ ዓመት ይጨመራል። ያለፉ ቡድኖች በዚህ ታሪክ ውስጥ ይቆያሉ።",
     back: "ወደ ዋና ገጽ", privacy: "የመሪዎች መገለጫና መገኛ የሚታተሙት ፈቃድ ሲኖር ብቻ ነው። የአባላት ብዛትና የምርጫ መረጃ በሕብረቱ መረጋገጥ አለበት።",
@@ -87,16 +86,24 @@ function safeNumber(value) {
 }
 function records() {
   return (Array.isArray(fellowshipUniversityRecords) ? fellowshipUniversityRecords : [])
-    .filter(row => row && row.active !== false && String(row.universityName || "").trim());
+    .filter(row => row && row.active !== false && String(row.universityName || "").trim())
+    .sort((a, b) => String(a.universityName).localeCompare(String(b.universityName), undefined, { sensitivity: "base", numeric: true }));
 }
 function currentLeaders(row) { return Array.isArray(row.leaders) ? row.leaders : []; }
+function allLeaders(row) {
+  return [
+    ...currentLeaders(row),
+    ...(Array.isArray(row.branches) ? row.branches.flatMap(branch => Array.isArray(branch.leaders) ? branch.leaders : []) : [])
+  ];
+}
 function leadershipTerms(row) {
   const legacy = Array.isArray(row.leadershipHistory) ? row.leadershipHistory : [];
   return [...legacy].filter(term => term && (term.academicYear || term.year)).sort((a, b) => String(b.academicYear || b.year).localeCompare(String(a.academicYear || a.year), undefined, { numeric: true }));
 }
 function allSearchableWords(row) {
   const people = [...currentLeaders(row), ...leadershipTerms(row).flatMap(term => term.leaders || [])];
-  return [row.universityName, row.city, row.fellowshipName, row.description, ...leadershipTerms(row).map(term => term.academicYear || term.year), ...people.flatMap(person => [person.fullName, person.department, ROLE_TITLE[person.role], person.introduction, person.electedYear, person.termStartYear, person.termEndYear])].join(" ").toLocaleLowerCase();
+  const branchWords = (Array.isArray(row.branches) ? row.branches : []).flatMap(branch => [branch.name, ...(Array.isArray(branch.leaders) ? branch.leaders.flatMap(person => [person.fullName, person.department, person.role]) : [])]);
+  return [row.universityName, row.city, row.fellowshipName, row.description, ...branchWords, ...leadershipTerms(row).map(term => term.academicYear || term.year), ...people.flatMap(person => [person.fullName, person.department, ROLE_TITLE[person.role], person.introduction, person.electedYear, person.termStartYear, person.termEndYear])].join(" ").toLocaleLowerCase();
 }
 
 export function setupFellowshipLeadersRoom() {
@@ -218,12 +225,19 @@ function buildHero() {
   const section = document.createElement("section");
   section.className = "relative isolate overflow-hidden rounded-[1.8rem] bg-gradient-to-br from-slate-950 via-teal-950 to-emerald-900 px-5 py-8 text-white shadow-xl sm:px-8 sm:py-10";
   section.setAttribute("aria-labelledby", "leaders-hero-title");
+  const campusBackdrop = document.createElement("img");
+  campusBackdrop.src = "https://images.pexels.com/photos/31085764/pexels-photo-31085764/free-photo-of-modern-university-campus-with-students-outdoors.jpeg?auto=compress&dpr=1&h=1800&w=2400";
+  campusBackdrop.alt = "";
+  campusBackdrop.setAttribute("aria-hidden", "true");
+  campusBackdrop.className = "pointer-events-none absolute inset-0 z-0 h-full w-full object-cover object-center";
+  const campusShade = document.createElement("div");
+  campusShade.className = "pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/75 via-slate-950/45 to-teal-950/25";
   const glow = document.createElement("div");
   glow.className = "pointer-events-none absolute -right-12 -top-20 -z-10 h-72 w-72 rounded-full bg-amber-300/20 blur-3xl";
   const glow2 = document.createElement("div");
   glow2.className = "pointer-events-none absolute -bottom-24 left-1/3 -z-10 h-60 w-60 rounded-full bg-teal-300/15 blur-3xl";
   const content = document.createElement("div");
-  content.className = "relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end";
+  content.className = "relative z-10 grid gap-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end";
   const copy = document.createElement("div");
   copy.className = "max-w-4xl";
   const eyebrow = document.createElement("p");
@@ -231,31 +245,29 @@ function buildHero() {
   eyebrow.append(icon("fa-solid fa-sparkles"), document.createTextNode(t("eyebrow")));
   copy.append(eyebrow, textNode("h1", "mt-4 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl", t("title")), textNode("p", "mt-4 max-w-3xl text-sm leading-6 text-teal-50/90 sm:text-base sm:leading-7", t("intro")));
   const stamp = document.createElement("div");
-  stamp.className = "flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm";
+  stamp.className = "relative flex min-w-[15rem] items-center gap-3 rounded-[1.5rem_2.5rem_1.5rem_2rem] border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-sm";
   const stampIcon = document.createElement("span");
   stampIcon.className = "flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-300/15 text-xl text-amber-200";
   stampIcon.append(icon("fa-solid fa-hands-praying"));
   const stampCopy = document.createElement("div");
   stampCopy.append(textNode("p", "text-[9px] font-black uppercase tracking-[.16em] text-amber-200", "ACE-USF"), textNode("p", "mt-1 text-xs font-bold text-white", "One fellowship across campuses"));
-  stamp.append(stampIcon, stampCopy);
+  const stampBody = document.createElement("div");
+  stampBody.append(stampCopy, textNode("p", "mt-3 max-w-xs text-[10px] leading-5 text-teal-50/80", "Campus teams · shared service · one fellowship"));
+  stamp.append(stampIcon, stampBody);
   content.append(copy, stamp);
-  section.append(glow, glow2, content);
+  section.append(campusBackdrop, campusShade, glow, glow2, content);
   return section;
 }
 
 function buildStats() {
   const list = records();
-  const memberValues = list.map(row => safeNumber(row.activeMembers));
-  const memberTotal = memberValues.reduce((sum, value) => sum + (value || 0), 0);
-  const memberCountComplete = memberValues.length > 0 && memberValues.every(value => value !== null);
-  const leadersTotal = list.reduce((sum, row) => sum + currentLeaders(row).filter(person => person?.fullName).length, 0);
+  const leadersTotal = list.reduce((sum, row) => sum + allLeaders(row).filter(person => person?.fullName).length, 0);
   const cities = new Set(list.map(row => String(row.city || "").trim()).filter(Boolean));
   const stats = document.createElement("section");
-  stats.className = "grid grid-cols-2 gap-3 lg:grid-cols-4";
+  stats.className = "grid grid-cols-1 gap-3 sm:grid-cols-3";
   stats.setAttribute("aria-label", "Fellowship network statistics");
   stats.append(
     statCard(list.length ? String(list.length) : "—", t("campuses"), "fa-solid fa-building-columns", "teal"),
-    statCard(memberCountComplete ? memberTotal.toLocaleString() : "—", t("members"), "fa-solid fa-people-group", "amber"),
     statCard(list.length ? String(leadersTotal) : "—", t("leaders"), "fa-solid fa-user-tie", "blue"),
     statCard(cities.size ? String(cities.size) : "—", t("cities"), "fa-solid fa-location-dot", "purple")
   );
@@ -364,14 +376,10 @@ function buildCampusCard(row) {
   const name = document.createElement("span");
   name.className = "min-w-0 flex-1";
   name.append(textNode("span", "block truncate text-sm font-black text-slate-950 sm:text-base", row.universityName), textNode("span", "mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500", row.city || t("locationMissing")));
-  const badges = document.createElement("span");
-  badges.className = "hidden shrink-0 flex-col items-end gap-1 sm:flex";
-  const memberCount = safeNumber(row.activeMembers);
-  badges.append(textNode("span", "rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold text-emerald-900", memberCount === null ? t("membersMissing") : `${memberCount.toLocaleString()} ${t("membersCount")}`));
   const chevron = document.createElement("span");
   chevron.className = "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-500 transition group-open:rotate-180";
   chevron.append(icon("fa-solid fa-chevron-down text-xs"));
-  summary.append(emblem, name, badges, chevron);
+  summary.append(emblem, name, chevron);
   const body = document.createElement("div");
   body.className = "border-t border-slate-100 p-4 sm:p-5";
   body.append(buildCampusOverview(row));
@@ -387,14 +395,9 @@ function buildCampusCard(row) {
 
 function buildCampusOverview(row) {
   const overview = document.createElement("div");
-  overview.className = "grid gap-3 sm:grid-cols-3";
-  const active = safeNumber(row.activeMembers);
-  overview.append(
-    miniMetric("fa-solid fa-people-group", t("membersCount"), active === null ? t("membersMissing") : active.toLocaleString(), "emerald"),
-    miniMetric("fa-solid fa-location-dot", t("location"), row.city || t("locationMissing"), "amber"),
-    miniMetric("fa-solid fa-calendar-check", t("current"), termSummary(currentLeaders(row)), "blue")
-  );
-  if (row.description) overview.append(textNode("p", "sm:col-span-3 rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-5 text-slate-600", row.description));
+  overview.className = "grid gap-3 sm:grid-cols-[minmax(0,.6fr)_minmax(0,1.4fr)]";
+  overview.append(miniMetric("fa-solid fa-location-dot", t("location"), row.city || t("locationMissing"), "amber"));
+  if (row.description) overview.append(textNode("p", "rounded-xl bg-slate-50 px-3 py-2.5 text-[11px] leading-5 text-slate-600", row.description));
   return overview;
 }
 
@@ -531,11 +534,8 @@ function buildLeaderRoster(row) {
   const grid = document.createElement("div");
   grid.className = "mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3";
   const leads = currentLeaders(row);
-  for (const role of ROLES) {
-    const leader = leads.find(person => person.role === role);
-    grid.append(leader ? leaderCard(leader, role, "current") : missingLeaderCard(role));
-  }
-  section.append(heading, grid);
+  leads.filter(person => person?.fullName).forEach(person => grid.append(leaderCard(person, person.role || "", "current")));
+  if (grid.childElementCount) section.append(heading, grid);
   const branches = buildBranchRoster(row);
   const priest = buildChurchContact(row);
   if (branches) section.append(branches);
@@ -655,7 +655,7 @@ function missingLeaderCard(role) {
 function roleBadge(role, status) {
   const badge = document.createElement("span");
   badge.className = "inline-flex max-w-full items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[9px] font-black text-amber-950";
-  badge.append(icon(status === "current" ? "fa-solid fa-star text-amber-700" : "fa-solid fa-clock-rotate-left text-slate-500"), document.createTextNode(ROLE_TITLE[role] || role || t("role")));
+  badge.append(icon(status === "current" ? "fa-solid fa-user text-amber-700" : "fa-solid fa-clock-rotate-left text-slate-500"), document.createTextNode(ROLE_TITLE[role] || role || t("leader")));
   return badge;
 }
 
@@ -697,16 +697,14 @@ function buildHistory(row) {
     top.className = "flex flex-wrap items-center justify-between gap-2";
     top.append(textNode("h5", "text-xs font-black text-indigo-950", term.academicYear || term.year), textNode("span", "rounded-full bg-indigo-50 px-2.5 py-1 text-[9px] font-bold text-indigo-800", term.electionDate ? `${t("elected")}: ${term.electionDate}` : t("previous")));
     const people = document.createElement("div");
-    people.className = "mt-3 grid gap-2 sm:grid-cols-3";
-    for (const role of ROLES) {
-      const past = (Array.isArray(term.leaders) ? term.leaders : []).find(person => person.role === role);
-      if (!past) continue;
+    people.className = "mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3";
+    for (const past of (Array.isArray(term.leaders) ? term.leaders : []).filter(person => person?.fullName)) {
       const person = document.createElement("div");
       person.className = "flex min-w-0 items-center gap-2 rounded-lg bg-slate-50 px-2.5 py-2";
       const pAvatar = document.createElement("span");
       pAvatar.className = "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[9px] font-black text-teal-900";
       pAvatar.textContent = initials(past.fullName);
-      person.append(pAvatar, elText("span", "min-w-0", [textNode("span", "block text-[9px] font-black text-slate-800", past.fullName || "—"), textNode("span", "mt-0.5 block truncate text-[8px] text-slate-500", `${ROLE_TITLE[role]} · ${past.department || "—"}`)]));
+      person.append(pAvatar, elText("span", "min-w-0", [textNode("span", "block text-[9px] font-black text-slate-800", past.fullName), textNode("span", "mt-0.5 block truncate text-[8px] text-slate-500", [past.role ? ROLE_TITLE[past.role] || past.role : "", past.department || ""].filter(Boolean).join(" · ") || t("leader"))]));
       people.append(person);
     }
     if (!people.childElementCount) people.append(textNode("p", "text-[10px] text-slate-500", t("historyMissing")));

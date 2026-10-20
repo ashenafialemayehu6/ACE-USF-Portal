@@ -1,6 +1,6 @@
 // js/app.js - Master Interactive Controller for ACE-USF Portal
 import { renderHomeSection, updateHomeGreeting } from './home_service.js';
-import { renderCampusNetworkSection } from './campus_network.js';
+import { renderCampusNetworkSection, openCampusBibleStudies } from './campus_network.js';
 import { initWeatherWidget, fetchCampusWeather } from "./weather_service.js";
 import { renderChurchList } from "./church_locator.js";
 import { populateInstitutionSelect } from "./institutions.js";
@@ -91,6 +91,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Compact header navigation forwards to the existing desktop controls so
+  // both layouts use the same navigation and section lifecycle.
+  document.getElementById("compact-navigation")?.addEventListener("click", event => {
+    const trigger = event.target.closest("[data-mobile-nav-target]");
+    if (!trigger) return;
+    document.getElementById(trigger.dataset.mobileNavTarget)?.click();
+  });
+
   // Delegate section navigation so links rendered later inside dynamic sections work too.
   document.addEventListener("click", (event) => {
     const link = event.target.closest("a, button");
@@ -105,6 +113,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (link.matches("[data-open-advice-room]")) {
       event.preventDefault();
       openAdviceRoom(link);
+      return;
+    }
+
+    if (link.matches("[data-open-campus-bible-study]")) {
+      event.preventDefault();
+      openCampusBibleStudies(link.dataset.schoolId || "");
       return;
     }
 

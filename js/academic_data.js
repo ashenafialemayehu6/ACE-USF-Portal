@@ -393,6 +393,70 @@ export const seniorDepartments = [
   }
 ];
 
+// Expanded Ethiopia-oriented directory for Campus Network college fellowships.
+// Program names vary by institution; these broad labels keep signup, search, and
+// college directories aligned without claiming every university offers every major.
+const additionalCampusDepartments = [
+  ["midwifery", "Midwifery", "Health Sciences"],
+  ["medical-lab", "Medical Laboratory Sciences", "Health Sciences"],
+  ["medical-radiology", "Medical Radiologic Technology", "Health Sciences"],
+  ["anesthesia", "Anesthesia", "Health Sciences"],
+  ["dentistry", "Dentistry / Dental Medicine", "Health Sciences"],
+  ["optometry", "Optometry", "Health Sciences"],
+  ["health-officer", "Health Officer (HO)", "Health Sciences"],
+  ["public-health", "Public Health", "Health Sciences"],
+  ["environmental-health", "Environmental Health", "Health Sciences"],
+  ["health-informatics", "Health Informatics", "Health Sciences"],
+  ["psychiatry", "Psychiatry", "Health Sciences"],
+  ["psychiatric-nursing", "Psychiatry Nursing", "Health Sciences"],
+  ["emergency-critical-care", "Emergency & Critical Care Nursing", "Health Sciences"],
+  ["pediatric-nursing", "Pediatric & Child Health Nursing", "Health Sciences"],
+  ["ob-gyn-nursing", "Obstetrics & Gynecology Nursing", "Health Sciences"],
+  ["physiotherapy", "Physiotherapy & Rehabilitation", "Health Sciences"],
+  ["nutrition-dietetics", "Nutrition & Dietetics", "Health Sciences"],
+  ["clinical-psychology", "Clinical Psychology", "Health Sciences"],
+  ["mechanical", "Mechanical Engineering", "Engineering & Tech"],
+  ["chemical", "Chemical Engineering", "Engineering & Tech"],
+  ["industrial", "Industrial Engineering", "Engineering & Tech"],
+  ["construction-management", "Construction Technology & Management", "Engineering & Tech"],
+  ["architecture", "Architecture", "Engineering & Tech"],
+  ["urban-regional-planning", "Urban & Regional Planning", "Engineering & Tech"],
+  ["water-resources", "Water Resources Engineering", "Engineering & Tech"],
+  ["environmental-engineering", "Environmental Engineering", "Engineering & Tech"],
+  ["biomedical-engineering", "Biomedical Engineering", "Engineering & Tech"],
+  ["geomatics", "Geomatics / Surveying Engineering", "Engineering & Tech"],
+  ["mining", "Mining Engineering", "Engineering & Tech"],
+  ["agricultural-engineering", "Agricultural / Bio-systems Engineering", "Engineering & Tech"],
+  ["food-process-engineering", "Food Process Engineering", "Engineering & Tech"],
+  ["textile-engineering", "Textile Engineering", "Engineering & Tech"],
+  ["leather-engineering", "Leather Engineering", "Engineering & Tech"],
+  ["railway-engineering", "Railway Engineering", "Engineering & Tech"],
+  ["energy-engineering", "Energy Engineering", "Engineering & Tech"],
+  ["information-technology", "Information Technology", "Engineering & Tech"],
+  ["software-computing", "Software & Computing Technology", "Engineering & Tech"],
+  ["business-admin", "Business Administration", "Business & Economics"],
+  ["management", "Management", "Business & Economics"],
+  ["marketing", "Marketing Management", "Business & Economics"],
+  ["public-admin", "Public Administration & Development Management", "Business & Economics"],
+  ["logistics-supply-chain", "Logistics & Supply Chain Management", "Business & Economics"],
+  ["sociology", "Sociology", "Law & Humanities"],
+  ["psychology", "Psychology", "Law & Humanities"],
+  ["political-science-ir", "Political Science & International Relations", "Law & Humanities"],
+  ["social-work", "Social Work", "Law & Humanities"],
+  ["geography-environment", "Geography & Environmental Studies", "Law & Humanities"],
+  ["history-heritage", "History & Heritage Management", "Law & Humanities"],
+  ["journalism-communication", "Journalism & Communication", "Law & Humanities"],
+  ["anthropology", "Anthropology", "Law & Humanities"],
+  ["gender-studies", "Gender & Development Studies", "Law & Humanities"],
+  ["language-literature", "Languages & Literature", "Law & Humanities"],
+  ["tourism-hospitality", "Tourism & Hospitality Management", "Business & Economics"],
+  ["development-studies", "Development Studies", "Law & Humanities"],
+  ["education-management", "Educational Planning & Management", "Law & Humanities"],
+  ["civics-ethics", "Civics & Ethical Studies", "Law & Humanities"]
+];
+
+seniorDepartments.push(...additionalCampusDepartments.map(([id, name, group]) => ({ id, name, group, courses: [], advices: [] })));
+
 // ============================================================================
 // 🛠️ HELPER FUNCTION: POPULATE DEPARTMENT SELECT DROPDOWN
 // ============================================================================

@@ -1,4 +1,5 @@
 import { ethiopianInstitutions } from "./institutions.js";
+import { openCampusWomensSanctuary } from "./campus_network.js";
 
 const BOT_URL = "https://t.me/ACE_USF_AssistantBot";
 const MEDIA_URL = "https://t.me/AmenApostolicMedia";
@@ -183,6 +184,12 @@ dialog.querySelector("[data-campus-search]")?.addEventListener("input", renderCa
 dialog.querySelector("[data-campus-region]")?.addEventListener("change", renderCampusResults);
 
 document.addEventListener("click", event => {
+  const sistersLink = event.target.closest("[data-open-womens-sanctuary]");
+  if (sistersLink) {
+    event.preventDefault();
+    openCampusWomensSanctuary();
+    return;
+  }
   const trigger = event.target.closest("[data-footer-room]");
   if (!trigger) return;
   event.preventDefault();

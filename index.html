@@ -16,6 +16,209 @@
 
   <style>
     body { font-family: 'Inter', sans-serif; }
+    html, body { width: 100%; min-width: 320px; }
+    body { min-height: 100svh; overflow-x: clip; }
+    /* Give every full-page section a consistent, fluid site shell. */
+    .max-w-7xl { max-width: min(96vw, 1720px); }
+    #app-dashboard { width: min(96vw, 1720px); max-width: none; }
+    #portal-home, #about-section { width: min(96vw, 1720px); }
+    .home-hero-copy-shade {
+      background: radial-gradient(ellipse at 44% 54%, rgb(2 13 17 / .76) 0%, rgb(2 13 17 / .56) 44%, transparent 86%), linear-gradient(90deg, rgb(2 13 17 / .62) 0%, rgb(2 13 17 / .34) 44%, transparent 100%);
+    }
+    .home-hero-art { opacity: .78; }
+    @media (max-width: 640px) {
+      .home-hero-copy-shade { background: linear-gradient(90deg, rgb(2 13 17 / .82), rgb(2 13 17 / .67) 72%, rgb(2 13 17 / .42)); }
+      .home-hero-art { opacity: .2; right: -14%; bottom: -12%; top: auto; width: 78%; }
+    }
+    html { scroll-padding-top: 5.5rem; }
+    img, video, canvas, svg { max-width: 100%; }
+    #app-dashboard > * { min-width: 0; }
+    input, select, textarea { max-width: 100%; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .portal-welcome-banner {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      min-height: clamp(31rem, 54vw, 45rem);
+      overflow: hidden;
+      align-items: center;
+      border: 1px solid rgb(255 255 255 / .3);
+      border-radius: clamp(2rem, 5vw, 4rem) clamp(2rem, 8vw, 6.5rem) clamp(2rem, 5vw, 4rem) clamp(2rem, 8vw, 6.5rem);
+      background: #102b35;
+      box-shadow: 0 38px 100px rgb(8 23 36 / .28), inset 0 1px 0 rgb(255 255 255 / .22);
+    }
+    .portal-welcome-banner__photo {
+      position: absolute;
+      z-index: -3;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 66% 43%;
+      transform: scale(1.035);
+      filter: saturate(.9) contrast(1.06);
+    }
+    .portal-welcome-banner::before {
+      position: absolute;
+      z-index: -2;
+      inset: 0;
+      content: "";
+      background: radial-gradient(ellipse at 78% 8%, rgb(151 224 211 / .2), transparent 27%), radial-gradient(ellipse at 2% 100%, rgb(31 105 91 / .3), transparent 38%), linear-gradient(90deg, rgb(3 16 25 / .88) 0%, rgb(4 20 29 / .79) 36%, rgb(5 23 31 / .48) 58%, rgb(4 16 25 / .06) 86%), linear-gradient(0deg, rgb(3 15 23 / .32), transparent 48%);
+    }
+    .portal-welcome-banner::after {
+      position: absolute;
+      z-index: -1;
+      inset: clamp(.7rem, 1.5vw, 1.25rem);
+      border: 1px solid rgb(255 255 255 / .25);
+      border-radius: clamp(1.4rem, 4vw, 3.2rem) clamp(1.4rem, 7vw, 5.7rem) clamp(1.4rem, 4vw, 3.2rem) clamp(1.4rem, 7vw, 5.7rem);
+      content: "";
+      pointer-events: none;
+      box-shadow: inset 0 0 50px rgb(255 255 255 / .035);
+    }
+    .portal-welcome-banner__content {
+      width: min(70%, 70rem);
+      margin: 0;
+      padding: clamp(3rem, 7vw, 6rem) 0 clamp(3rem, 7vw, 6rem) clamp(1.8rem, 8vw, 8rem);
+      text-align: left;
+      text-wrap: balance;
+    }
+    .portal-welcome-banner__content > span { position: relative; align-self: flex-start; border-color: rgb(255 255 255 / .35); background: rgb(5 19 27 / .45); box-shadow: 0 12px 35px rgb(0 0 0 / .2); }
+    .portal-welcome-banner__content > span::before { position: absolute; inset: -5px; border: 1px solid rgb(224 188 119 / .28); border-radius: 999px; content: ""; pointer-events: none; }
+    .portal-welcome-banner__title {
+      max-width: 13ch;
+      margin: 1.4rem 0 0;
+      color: white;
+      font-size: clamp(2.5rem, 5.8vw, 5.5rem);
+      font-weight: 850;
+      letter-spacing: -.06em;
+      line-height: 1.01;
+      text-shadow: 0 5px 30px rgb(0 0 0 / .55);
+    }
+    .portal-welcome-banner__description {
+      max-width: 47rem;
+      margin: 1.35rem 0 0;
+      color: rgb(248 250 252 / .94);
+      font-size: clamp(1rem, 1.6vw, 1.25rem);
+      font-weight: 500;
+      line-height: 1.75;
+      text-shadow: 0 2px 16px rgb(0 0 0 / .76);
+    }
+    @media (max-width: 1023px) {
+      html { scroll-padding-top: 7.5rem; }
+    }
+    @media (max-width: 767px) {
+      .max-w-7xl { max-width: 100%; }
+      #app-dashboard, #portal-home, #about-section { width: 100%; }
+      #portal-home { margin-top: 1rem; }
+      #app-dashboard { gap: 1.25rem; padding-inline: .75rem; }
+      #app-dashboard > aside, #forum-section, #app-dashboard > section { min-width: 0; }
+      #campus-detail-modal { align-items: end; padding: 0; }
+      #campus-detail-modal > div { max-height: 94dvh; overflow-y: auto; border-radius: 1.5rem 1.5rem 0 0; }
+      #campus-modal-body { max-height: calc(94dvh - 1rem); padding: 1.1rem; }
+    }
+    @media (max-width: 480px) {
+      #portal-home { padding-inline: .75rem; }
+      #portal-home > .portal-welcome-banner { padding: 0; }
+      .portal-welcome-banner { min-height: 34rem; }
+      .portal-welcome-banner__photo { object-position: 61% center; }
+      .portal-welcome-banner::after { inset: .55rem; }
+      .portal-welcome-banner__content { padding-inline: 1.4rem; padding-bottom: 2rem; }
+      #app-dashboard { padding-inline: .65rem; }
+      input:not([type="checkbox"]):not([type="radio"]), select { min-height: 2.75rem; }
+      textarea { min-height: 6rem; }
+      p, a, button, label, h1, h2, h3, h4 { overflow-wrap: break-word; }
+    }
+    /* Phone and small tablet layout: let content grow instead of colliding or clipping. */
+    @media (max-width: 767px) {
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { width: 100%; min-width: 320px; }
+      body { overflow-x: hidden; }
+      .max-w-7xl, #portal-home, #about-section, #app-dashboard { max-width: 100%; }
+      #app-dashboard { grid-template-columns: minmax(0, 1fr); }
+      #app-dashboard > *, #app-dashboard :is(section, article, aside, header, footer, div) { min-width: 0; }
+      #app-dashboard :is(h1, h2, h3, h4, p, a, button, label, span) { overflow-wrap: break-word; }
+
+      /* The utility row can wrap; its former nowrap setting could widen the page. */
+      body > div.bg-slate-950 > .max-w-7xl { flex-wrap: wrap; gap: .5rem .75rem; white-space: normal; }
+      body > div.bg-slate-950 > .max-w-7xl > :last-child { margin-left: auto; }
+      #compact-navigation { max-width: 100%; overscroll-behavior-inline: contain; scrollbar-width: thin; }
+      #compact-navigation button { min-height: 44px; }
+
+      /* Keep hero text in its own flowing area over a readable image treatment. */
+      #portal-home .portal-welcome-banner { min-height: 0; min-height: 72svh; align-items: end; }
+      #portal-home .portal-welcome-banner__content { width: 100%; padding: clamp(5.5rem, 16vh, 8rem) clamp(1.6rem, 7vw, 3rem) 2.2rem; }
+      #portal-home .portal-welcome-banner__title { max-width: 13ch; font-size: clamp(2rem, 8.5vw, 3.3rem); line-height: 1.05; letter-spacing: -.045em; }
+      #portal-home .portal-welcome-banner__description { max-width: 38rem; font-size: clamp(.98rem, 3.7vw, 1.08rem); line-height: 1.68; }
+      .home-hero-section { min-height: 0 !important; border-radius: 1.5rem 2rem 1.5rem 2.5rem !important; padding: clamp(1.25rem, 5vw, 2rem) !important; }
+      .home-hero-section > .relative.z-10 { width: 100%; }
+      .home-hero-section #home-greeting-title { font-size: clamp(2rem, 9vw, 3.25rem); line-height: 1.08; }
+      .home-hero-section #home-greeting-context { letter-spacing: .12em; line-height: 1.5; }
+      .home-hero-section > .relative.z-10 > .flex.flex-wrap { align-items: stretch; }
+      .home-hero-section > .relative.z-10 > .flex.flex-wrap > button { flex: 1 1 100%; justify-content: center; min-height: 44px; text-align: center; }
+
+      /* Scrollable tab rows remain usable without pushing the viewport wider. */
+      .ace-campus-network-shell { width: 100%; max-width: 100%; }
+      .ace-campus-network-shell > .flex.items-center.gap-3.overflow-x-auto { max-width: 100%; overscroll-behavior-inline: contain; scrollbar-width: thin; }
+      .ace-campus-network-shell .sub-nav-btn { min-height: 44px; flex: 0 0 auto; white-space: normal; }
+      .ace-campus-network-shell #campus-cards-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+      .ace-campus-network-shell #campus-cards-grid article { border-radius: 1.5rem; }
+      .ace-campus-network-shell #campus-cards-grid article > div:last-child { padding: 1rem; }
+      .ace-campus-network-shell #campus-cards-grid article h3,
+      .ace-campus-network-shell #campus-cards-grid article p { min-height: 0 !important; -webkit-line-clamp: unset !important; display: block !important; overflow: visible !important; }
+      .ace-campus-network-shell #campus-cards-grid article [data-live-school-total] { overflow-wrap: anywhere; }
+      .ace-campus-network-shell [data-bible-study-school] > header { min-height: 21rem; gap: 2rem; padding: 1.15rem; }
+      .ace-campus-network-shell [data-bible-study-school] > header > .relative.z-20:first-of-type { flex-wrap: wrap; align-items: center; gap: .65rem; }
+      .ace-campus-network-shell [data-bible-study-school] > header > .relative.z-20:first-of-type > span:last-child { max-width: 100%; white-space: normal; line-height: 1.4; }
+      .ace-campus-network-shell [data-bible-study-school] > header h3 { font-size: clamp(1.35rem, 6vw, 1.8rem); line-height: 1.15; }
+      .ace-campus-network-shell [data-bible-study-school] > div:last-child { padding: 1rem; }
+      .ace-campus-network-shell [data-bible-study-school] [data-campus-search-record] { min-width: 0; }
+      .ace-campus-network-shell [data-campus-search-record] a,
+      .ace-campus-network-shell [data-campus-search-record] button { max-width: 100%; white-space: normal; }
+
+      /* Dialogs use the visual viewport and scroll internally on phones. */
+      #auth-modal, #library-modal, #church-modal, #campus-detail-modal,
+      .ace-campus-network-shell #register-modal { padding: 0; align-items: stretch; }
+      #auth-modal > div, #library-modal > div { width: 100%; max-width: 100%; min-height: 100svh; max-height: 100svh; }
+      #auth-modal > div > section { min-height: 100svh; }
+      #campus-detail-modal > div { width: 100%; max-width: 100%; max-height: 94svh; border-radius: 1.25rem 1.25rem 0 0; }
+      #campus-modal-body { max-height: calc(94svh - 3rem); padding: 1rem; overflow-y: auto; overscroll-behavior: contain; }
+      .ace-campus-network-shell #register-modal > div { width: 100%; max-height: 100svh; border-radius: 1.25rem 1.25rem 0 0; padding: 1.25rem; }
+
+      /* Forms, toolbars, and data-heavy areas can shrink or scroll locally. */
+      input, select, textarea, button { max-width: 100%; }
+      input:not([type="checkbox"]):not([type="radio"]), select { min-height: 44px; font-size: 16px; }
+      textarea { min-height: 7rem; font-size: 16px; }
+      [role="dialog"] { max-width: 100vw; }
+      table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      pre, code { max-width: 100%; overflow-wrap: anywhere; }
+    }
+    @media (max-width: 380px) {
+      #portal-home .portal-welcome-banner__content { padding-inline: 1rem; }
+      #portal-home .portal-welcome-banner__title { font-size: 1.75rem; }
+      .home-hero-section #home-greeting-title { font-size: 1.9rem; }
+      #compact-navigation { gap: .35rem; padding-inline: .5rem; }
+      #compact-navigation button { padding-inline: .65rem; font-size: .68rem; }
+      .ace-campus-network-shell [data-bible-study-school] > header { min-height: 23rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto !important; }
+      *, *::before, *::after { scroll-behavior: auto !important; }
+    }
+    /* Site-wide display comfort controls */
+    body.comfort-dim::before,
+    body.comfort-warm::after {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60;
+    }
+    body.comfort-dim::before { background: rgb(0 0 0 / var(--comfort-dim, 0)); }
+    body.comfort-warm::after { background: rgb(255 184 92 / var(--comfort-warm, 0)); mix-blend-mode: multiply; }
+    body.comfort-dark { background-color: #0b1220 !important; color: #e5e7eb !important; }
+    body.comfort-dark :is(.bg-white, .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-stone-50, .bg-teal-50, .bg-emerald-50, .bg-amber-50, .bg-sky-50, .bg-indigo-50, .bg-purple-50, .bg-red-50) { background-color: #111827 !important; }
+    body.comfort-dark :is(.text-slate-900, .text-slate-800, .text-slate-700, .text-gray-900, .text-gray-800, .text-gray-700) { color: #e5e7eb !important; }
+    body.comfort-dark :is(.text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500) { color: #aab6c7 !important; }
+    body.comfort-dark :is(.border-slate-200, .border-slate-100, .border-gray-200, .border-gray-100) { border-color: #334155 !important; }
+    body.comfort-dark :is(input, select, textarea) { background-color: #111827 !important; color: #f8fafc !important; border-color: #475569 !important; }
+    #comfort-popover { color-scheme: light; }
+    body.comfort-dark #comfort-popover { color-scheme: dark; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 flex flex-col min-h-screen">
@@ -37,8 +240,21 @@
           <button id="lang-am-btn" type="button" class="px-2 py-0.5 rounded-md text-slate-300 hover:text-white transition">አማ</button>
         </div>
         <div class="flex items-center space-x-2.5">
-          <a href="https://t.me" target="_blank" class="hover:text-amber-400 transition" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
-          <a href="#" class="hover:text-amber-400 transition" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://t.me/ACE_USF_AssistantBot" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition" title="Open the ACE-USF Telegram Assistant" aria-label="Open the ACE-USF Telegram Assistant"><i class="fa-brands fa-telegram"></i></a>
+          <a href="https://youtu.be/OmA9U3AgUss" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition" title="Open the official Apostolic Church YouTube channel" aria-label="Open the official Apostolic Church YouTube channel"><i class="fa-brands fa-youtube"></i></a>
+          <button id="comfort-toggle" type="button" class="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-amber-300 transition hover:border-amber-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400" aria-label="Open display comfort settings" aria-expanded="false" aria-controls="comfort-popover" title="Display comfort settings"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
+          <section id="comfort-popover" class="fixed left-3 top-12 z-[80] hidden w-[min(21rem,calc(100vw-1.5rem))] rounded-2xl border border-slate-200 bg-white p-4 text-slate-800 shadow-2xl sm:left-auto sm:right-4 sm:top-12" role="dialog" aria-labelledby="comfort-title">
+            <div class="flex items-start justify-between gap-3">
+              <div><h2 id="comfort-title" class="text-sm font-extrabold">Display comfort</h2><p class="mt-1 text-xs text-slate-500">Adjust the whole page. Your choices are saved on this device.</p></div>
+              <button id="comfort-close" type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100" aria-label="Close display settings"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+            <button id="comfort-dark-toggle" type="button" class="mt-4 flex w-full items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5 text-left text-xs font-bold transition hover:bg-slate-50" aria-pressed="false"><span><i class="fa-solid fa-moon mr-2 text-indigo-500" aria-hidden="true"></i>Dark appearance</span><span id="comfort-dark-state" class="text-slate-500">Off</span></button>
+            <label for="comfort-dim-slider" class="mt-4 flex items-center justify-between text-xs font-semibold"><span><i class="fa-solid fa-sun mr-2 text-amber-500" aria-hidden="true"></i>Brightness</span><output id="comfort-dim-value" for="comfort-dim-slider">100%</output></label>
+            <input id="comfort-dim-slider" class="mt-2 w-full accent-amber-500" type="range" min="65" max="100" value="100">
+            <label for="comfort-warm-slider" class="mt-4 flex items-center justify-between text-xs font-semibold"><span><i class="fa-solid fa-eye mr-2 text-orange-500" aria-hidden="true"></i>Eye comfort warmth</span><output id="comfort-warm-value" for="comfort-warm-slider">Off</output></label>
+            <input id="comfort-warm-slider" class="mt-2 w-full accent-orange-500" type="range" min="0" max="55" value="0">
+            <button id="comfort-night-preset" type="button" class="mt-4 w-full rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-extrabold text-white transition hover:bg-slate-700"><i class="fa-solid fa-cloud-moon mr-2 text-amber-300" aria-hidden="true"></i>Set evening comfort</button>
+          </section>
         </div>
       </div>
     </div>
@@ -55,14 +271,14 @@
         </div>
         <div class="min-w-0 whitespace-nowrap">
           <h1 class="font-extrabold text-sm sm:text-base tracking-wide flex items-center gap-1.5">
-            <span class="shrink-0">ACE-USF</span><span id="header-subtitle-long" class="text-[10px] xl:text-[11px] font-semibold text-amber-400 hidden lg:inline">APOSTOLIC CHURCH OF ETHIOPIA UNIVERSITY STUDENTS FELLOWSHIP</span>
+            <span class="shrink-0">ACE-USF</span><span id="header-subtitle-long" class="text-[10px] xl:text-[11px] font-semibold text-amber-400 hidden xl:inline">APOSTOLIC CHURCH OF ETHIOPIA UNIVERSITY STUDENTS FELLOWSHIP</span>
           </h1>
           <p id="header-subtitle-short" class="text-[10px] font-semibold leading-tight tracking-[0.08em] text-slate-300">ONE GOD. ONE NAME: JESUS.</p>
         </div>
       </div>
 
       <!-- Clean Single-Line Navigation Links -->
-<nav id="main-navigation" class="hidden md:flex ml-auto shrink-0 items-center gap-2 lg:gap-3 text-[10px] lg:text-[11px] xl:text-xs font-semibold text-slate-200 whitespace-nowrap" aria-label="Main navigation">
+<nav id="main-navigation" class="hidden lg:flex ml-auto shrink-0 items-center gap-2 lg:gap-3 text-[10px] lg:text-[11px] xl:text-xs font-semibold text-slate-200 whitespace-nowrap" aria-label="Main navigation">
   <a id="nav-home" href="#portal-home" class="hover:text-amber-400 transition flex items-center gap-1.5 py-1">
     <i class="fa-solid fa-house text-amber-500" aria-hidden="true"></i><span class="lang-text-home">Home</span>
   </a>
@@ -121,6 +337,12 @@
         </div>
       </div>
     </div>
+    <nav id="compact-navigation" class="mx-auto flex max-w-7xl gap-1.5 overflow-x-auto px-3 pb-2 pt-1 text-slate-200 lg:hidden" aria-label="Compact main navigation">
+      <button type="button" data-mobile-nav-target="nav-home" class="min-h-11 shrink-0 rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold hover:bg-white/10"><i class="fa-solid fa-house mr-1.5 text-amber-400" aria-hidden="true"></i>Home</button>
+      <button type="button" data-mobile-nav-target="nav-campus-network" class="min-h-11 shrink-0 rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold hover:bg-white/10"><i class="fa-solid fa-sitemap mr-1.5 text-amber-400" aria-hidden="true"></i>Campus Network</button>
+      <button type="button" data-mobile-nav-target="nav-apostolic-library" class="min-h-11 shrink-0 rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold hover:bg-white/10"><i class="fa-solid fa-book-bible mr-1.5 text-amber-400" aria-hidden="true"></i>Library</button>
+      <button type="button" data-mobile-nav-target="nav-fellowship-leaders" class="min-h-11 shrink-0 rounded-xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold hover:bg-white/10"><i class="fa-solid fa-people-group mr-1.5 text-amber-400" aria-hidden="true"></i>Fellowship Leaders</button>
+    </nav>
   </header>
 
   <div id="fellowship-leaders-room-home-slot">
@@ -190,20 +412,16 @@
   </section>
   </div>
 
-  <!-- Hero Banner with Cross Watermark -->
-  <section id="portal-home" class="max-w-7xl mx-auto px-4 w-full mt-6">
-    <div class="relative overflow-hidden bg-gradient-to-r from-teal-800 via-teal-900 to-blue-950 text-white py-10 px-8 sm:px-12 rounded-3xl shadow-xl">
-      <div class="absolute -right-12 -bottom-12 text-teal-700/30 text-[220px] pointer-events-none select-none">
-        <i class="fa-solid fa-cross"></i>
-      </div>
-      <div class="relative z-10 max-w-2xl space-y-3">
-        <span class="inline-flex items-center gap-2 bg-teal-800/80 text-teal-200 text-xs font-bold px-3.5 py-1 rounded-full uppercase tracking-wider border border-teal-700 shadow-sm">
-          <i class="fa-solid fa-sparkles text-amber-400"></i> One Lord, One Faith, One Spirit Across Nations
+  <!-- Full-width welcome image banner -->
+  <section id="portal-home" class="max-w-7xl mx-auto px-4 w-full mt-6" aria-labelledby="hero-title">
+    <div class="portal-welcome-banner">
+      <img class="portal-welcome-banner__photo" src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&amp;fit=crop&amp;w=2200&amp;q=88" alt="University students sharing a moment of fellowship on campus" fetchpriority="high" />
+      <div class="portal-welcome-banner__content">
+        <span class="inline-flex items-center gap-2 rounded-full border border-white/35 bg-slate-950/35 px-4 py-2 text-[10px] font-extrabold uppercase tracking-[.17em] text-white shadow-lg backdrop-blur-md sm:text-xs">
+          <i class="fa-solid fa-cross text-amber-300" aria-hidden="true"></i> One Lord · One Faith · One Spirit
         </span>
-        <h2 id="hero-title" class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-          Apostolic Church of Ethiopia University Students Fellowship
-        </h2>
-        <p id="hero-desc" class="text-teal-100 text-xs sm:text-sm leading-relaxed">
+        <h1 id="hero-title" class="portal-welcome-banner__title">Apostolic Church of Ethiopia University Students Fellowship</h1>
+        <p id="hero-desc" class="portal-welcome-banner__description">
           Uniting and empowering Apostolic students across public and private universities and colleges in Ethiopia through pastoral teachings, spiritual literature, worship networks, and mentorship.
         </p>
       </div>
@@ -235,15 +453,7 @@
           </div>
         </a>
 
-        <a href="#sermons-section" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-xl hover:bg-teal-50/60 transition group cursor-pointer">
-          <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-lg group-hover:bg-blue-800 group-hover:text-white transition">
-            <i class="fa-solid fa-book-bible"></i>
-          </div>
-          <div>
-            <h4 class="text-xs font-bold text-gray-800 group-hover:text-teal-900">Apostolic Library</h4>
-            <p class="text-[11px] text-gray-500 mt-1 leading-tight">Spiritual literature & upcoming academic study resources.</p>
-          </div>
-        </a>
+
 
         <a href="#audio-room" data-open-audio-room aria-label="Open the ACE-USF Audio Room" class="flex flex-col items-center sm:items-start text-center sm:text-left space-y-2 p-3 rounded-2xl border border-transparent hover:-translate-y-1 hover:border-violet-100 hover:bg-violet-50/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 transition duration-200 group cursor-pointer">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-amber-100 text-violet-800 flex items-center justify-center text-lg group-hover:from-violet-800 group-hover:to-teal-800 group-hover:text-white transition">
@@ -489,13 +699,13 @@
         </div>
 
         <!-- Feature Card 2: Fellow Students Directory & Stats -->
-        <div id="students-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5 hover:border-amber-400 transition group cursor-pointer" onclick="alert('Student Directory will show connected fellowship members across 40+ Ethiopian campuses!')">
+        <div id="students-section" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-2.5 hover:border-amber-400 transition group cursor-pointer" onclick="alert('Explore student fellowship communities across the ACE-USF network.')">
           <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-lg font-bold shadow-xs group-hover:scale-105 transition">
             <i class="fa-solid fa-users"></i>
           </div>
           <div>
             <h3 class="text-xs font-bold text-gray-900 group-hover:text-teal-800">Fellow Students Network</h3>
-            <p class="text-[11px] text-gray-500 mt-1 leading-snug">Connect with 1,200+ Apostolic students and fellowship alumni across Ethiopian campuses.</p>
+            <p class="text-[11px] text-gray-500 mt-1 leading-snug">Discover student fellowship communities and campus connections across Ethiopia.</p>
           </div>
           <span class="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 pt-1">
             View Student Network <i class="fa-solid fa-arrow-right text-[9px]"></i>
@@ -873,6 +1083,7 @@
           <li><a href="#portal-home" class="hover:text-amber-400 transition">Home Portal</a></li>
           <li><a href="#ace-about-section" class="hover:text-amber-400 transition">About ACE-USF</a></li>
           <li><a href="#forum-section" class="hover:text-amber-400 transition">Student Forum & Prayers</a></li>
+          <li><a href="#campus-network" data-open-womens-sanctuary class="hover:text-amber-400 transition">Sisters Fellowship</a></li>
           <li><a href="#weather-section" class="hover:text-amber-400 transition">Campus Weather Updates</a></li>
         </ul>
       </div>
@@ -908,6 +1119,8 @@
       </div>
     </div>
 
+    </div>
+
     <div class="max-w-7xl mx-auto px-4 mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-3">
       <p>© 2026 Apostolic Church of Ethiopia University Students Fellowship (ACE-USF). All rights reserved.</p>
       <div class="flex space-x-4">
@@ -922,9 +1135,10 @@
 
   <!-- Main Application Script -->
   <script type="module" src="./js/app.js"></script>
+  <script defer src="./js/comfort_controls.js"></script>
 <!-- APOSTOLIC & ACADEMIC DIGITAL LIBRARY MODAL -->
-  <div id="library-modal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+  <div id="library-modal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-xs z-50 flex items-center justify-center p-0 hidden">
+    <div class="bg-white rounded-none shadow-2xl border-0 max-w-none w-screen h-screen overflow-hidden flex flex-col max-h-none">
       
       <!-- Modal Header & Room Switcher Tabs -->
       <div class="bg-slate-900 text-white px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 shrink-0">

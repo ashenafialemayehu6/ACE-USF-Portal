@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Engineering and technology fellowship</title>
+  <desc id="desc">A modern engineering studio with a circuit board, laptop, architectural lines, and warm collaborative light.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071b2a"/><stop offset=".52" stop-color="#123f4b"/><stop offset="1" stop-color="#172b39"/></linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35d6c2" stop-opacity=".88"/><stop offset="1" stop-color="#79a9ff" stop-opacity=".12"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f4c77b"/><stop offset="1" stop-color="#d98d4b"/></linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#143e51"/><stop offset="1" stop-color="#0b2233"/></linearGradient>
+    <pattern id="grid" width="52" height="52" patternUnits="userSpaceOnUse"><path d="M52 0H0V52" fill="none" stroke="#b8e9ef" stroke-opacity=".09" stroke-width="1"/></pattern>
+    <filter id="blur"><feGaussianBlur stdDeviation="55"/></filter>
+    <filter id="shadow" x="-.2" y="-.2" width="1.4" height="1.5"><feDropShadow dx="0" dy="28" stdDeviation="24" flood-color="#020b12" flood-opacity=".5"/></filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <circle cx="1290" cy="210" r="250" fill="#1ac7b4" opacity=".16" filter="url(#blur)"/>
+  <circle cx="310" cy="650" r="250" fill="#e5a85c" opacity=".13" filter="url(#blur)"/>
+  <path d="M0 704 258 590l182 77 238-197 190 82 206-178 214 119 312-181v588H0Z" fill="#071723" opacity=".44"/>
+  <g fill="none" stroke="url(#glow)" stroke-width="5" opacity=".9">
+    <path d="M104 174h180v95h110v86h145"/><path d="M95 224h112v116h131v89h119"/><path d="M1332 126h-138v112h-110v100h-114"/>
+    <path d="M1450 202h-96v108h-133v94h-99"/><path d="M110 525h142v-86h155v-72h103"/>
+  </g>
+  <g fill="#7ce4d5"><circle cx="284" cy="174" r="8"/><circle cx="539" cy="355" r="8"/><circle cx="1194" cy="126" r="8"/><circle cx="1221" cy="404" r="8"/><circle cx="407" cy="439" r="8"/></g>
+  <g opacity=".5" stroke="#b6e8ec" fill="none" stroke-width="3">
+    <path d="M119 662V390l99-81 106 51v302M134 648V405l84-68 91 45v266"/>
+    <path d="M1308 620V363l88-66 95 52v272M1325 620V375l71-53 78 43v255"/>
+    <path d="M170 423h63m-63 46h63m-63 46h63m1119-108h53m-53 46h53m-53 46h53"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M436 637 573 274q8-21 31-21h494q22 0 29 21l139 363q8 22-15 22H451q-23 0-15-22Z" fill="#152a37" stroke="#b5d9d8" stroke-opacity=".72" stroke-width="5"/>
+    <path d="m477 612 116-318h498l122 318Z" fill="url(#screen)"/>
+    <path d="M597 294h482M578 347h524M558 400h566M539 453h604M520 506h642M501 559h682" stroke="#a7c9d1" stroke-opacity=".13" stroke-width="2"/>
+    <path d="M597 294v318m96-318v318m96-318v318m96-318v318m96-318v318m96-318v318" stroke="#a7c9d1" stroke-opacity=".11" stroke-width="2"/>
+    <g transform="translate(827 448)">
+      <rect x="-92" y="-92" width="184" height="184" rx="24" fill="#0b202c" stroke="url(#gold)" stroke-width="7"/>
+      <rect x="-53" y="-53" width="106" height="106" rx="16" fill="#123c49" stroke="#5de0cf" stroke-width="5"/>
+      <path d="M-27-20h54v40h-54zM-100-36h-29m29 72h-29m229-72h29m-29 72h29M-36-100v-29m72 29v-29m-72 229v29m72-29v29" fill="none" stroke="#f2be70" stroke-width="8" stroke-linecap="round"/>
+      <circle r="9" fill="#f2be70"/>
+    </g>
+    <path d="M349 663h802l97 60q18 12-8 20H255q-25-8-6-21Z" fill="#9db9bc"/>
+    <path d="M397 670h706l49 28H347Z" fill="#d4dfd7"/>
+    <path d="M692 677h115l18 12H674Z" fill="#607b80" opacity=".78"/>
+  </g>
+  <g transform="translate(1260 590)" filter="url(#shadow)">
+    <path d="M-70 18h150l26 102H-94Z" fill="#c9d3ca"/><path d="M-55 31H66l18 69H-75Z" fill="#112935"/>
+    <path d="m-46 84 29-30 24 18 26-27 26 35" fill="none" stroke="#52d9c9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="31" cy="58" r="7" fill="#f3c276"/>
+  </g>
+  <g fill="url(#gold)" opacity=".95"><circle cx="1320" cy="714" r="5"/><circle cx="282" cy="276" r="4"/><circle cx="1090" cy="175" r="5"/><circle cx="376" cy="544" r="4"/></g>
+  <rect x="0" y="0" width="1600" height="900" fill="url(#bg)" opacity=".08"/>
+</svg>

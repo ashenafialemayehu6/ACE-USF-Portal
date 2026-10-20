@@ -4,6 +4,7 @@
 import { db, storage } from "./firebase_config.js";
 import { isCurrentUserAdmin } from "./firebase_auth_service.js";
 import { ethiopianInstitutions } from "./institutions.js";
+import { seniorDepartments } from "./academic_data.js";
 import {
   collection,
   onSnapshot,
@@ -36,36 +37,18 @@ const SECTIONS = {
     ]
   },
   leaders: {
-    label: "Fellowship leaders",
+    label: "Fellowship Leaders Network · universities and campus teams",
     fields: [
-      ["universityName", "University / college", "campus"],
+      ["universityName", "University / college (choose an existing university to add its contacts)", "campus"],
       ["city", "City", "city"],
-      ["activeMembers", "Active members", "number"],
       ["latitude", "Latitude", "number"],
       ["longitude", "Longitude", "number"],
+      ["fellowshipName", "Fellowship or shared congregation name"],
       ["description", "Campus fellowship description", "textarea"],
-      ["coordinatorName", "Coordinator አስተባባሪ name"],
-      ["coordinatorDepartment", "Coordinator department", "department"],
-      ["coordinatorPhone", "Coordinator phone (private unless approved)", "tel"],
-      ["coordinatorPhonePublic", "Show coordinator phone publicly (with consent)", "checkbox"],
-      ["coordinatorTelegram", "Coordinator Telegram"],
-      ["treasurerName", "Treasurer ገንዘብ ያዥ name"],
-      ["treasurerDepartment", "Treasurer department", "department"],
-      ["treasurerPhone", "Treasurer phone (private unless approved)", "tel"],
-      ["treasurerPhonePublic", "Show treasurer phone publicly (with consent)", "checkbox"],
-      ["treasurerTelegram", "Treasurer Telegram"],
-      ["secretaryName", "Secretary ጸሐፊ name"],
-      ["secretaryDepartment", "Secretary department", "department"],
-      ["secretaryPhone", "Secretary phone (private unless approved)", "tel"],
-      ["secretaryPhonePublic", "Show secretary phone publicly (with consent)", "checkbox"],
-      ["secretaryTelegram", "Secretary Telegram"],
-      ["branchesText", "University branches and branch leaders", "branches"],
+      ["branchesText", "Campus branches and fellowship contacts", "branches"],
       ["churchPriestName", "Church priest / chaplain name"],
       ["churchPriestPhone", "Church priest / chaplain phone", "tel"],
-      ["churchPriestPhonePublic", "Show priest phone publicly (with consent)", "checkbox"],
-      ["electedYear", "Election year", "number"],
-      ["termStartYear", "Term start year", "number"],
-      ["termEndYear", "Term end year", "number"]
+      ["churchPriestPhonePublic", "Show priest phone publicly (with consent)", "checkbox"]
     ]
   },
 
@@ -183,6 +166,7 @@ const SECTIONS = {
       ["university", "University / college", "campus"],
       ["telegram", "Coordinator Telegram username"],
       ["schedule", "Bible study schedule"],
+      ["departmentCounts", "Live department roster counts · JSON", "campusDepartmentCounts"],
       ["published", "Publish this coordinator", "checkbox"]
     ]
   },
@@ -613,12 +597,21 @@ function loadItems() {
         return;
       }
 
-      const orderedDocs = [...snapshot.docs].sort((a, b) => Number(b.data().status === "pending") - Number(a.data().status === "pending"));
+      const orderedDocs = [...snapshot.docs].sort((a, b) => {
+        const pendingOrder = Number(b.data().status === "pending") - Number(a.data().status === "pending");
+        if (pendingOrder) return pendingOrder;
+        const label = item => item.data().universityName || item.data().requesterName || item.data().displayName || item.data().title || item.data().name || item.id;
+        return String(label(a)).localeCompare(String(label(b)), undefined, { sensitivity: "base", numeric: true });
+      });
       list.innerHTML = orderedDocs.map(item => {
         const data = item.data();
         const title = data.requesterName ? `${data.requesterName} · ${data.programTitle || "Access request"}` : data.displayName || data.universityName || data.title || data.name || data.campus || item.id;
         const visibility = data.status ? `· ${data.status}` : data.published === false ? "Draft" : "Published";
-        const searchable = [data.requesterName, data.requesterEmail, data.displayName, data.universityName, data.fellowshipRole, data.programTitle, data.requestedDepartment, data.department, data.profileSex, data.sex, data.departmentGroup, data.status].join(" ").toLocaleLowerCase();
+        const rosterSearch = [
+          ...(Array.isArray(data.branches) ? data.branches.flatMap(branch => [branch.name, ...(Array.isArray(branch.leaders) ? branch.leaders : []).map(person => person.fullName)]) : []),
+          ...(Array.isArray(data.leaders) ? data.leaders.map(person => person.fullName) : [])
+        ];
+        const searchable = [data.requesterName, data.requesterEmail, data.displayName, data.universityName, data.fellowshipRole, data.programTitle, data.requestedDepartment, data.department, data.profileSex, data.sex, data.departmentGroup, data.status, ...rosterSearch].join(" ").toLocaleLowerCase();
 
         return `
           <div data-admin-record data-status="${safe(data.status || "")}" data-search="${safe(searchable)}" data-pending="${data.status === "pending"}" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3">
@@ -723,6 +716,11 @@ function renderForm(record) {
       return `<label class="text-xs font-semibold text-slate-600">${safe(label)}<select name="${safe(key)}" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm"><option value="">Choose the college</option><option value="medicine-health-sciences" ${selected === "medicine-health-sciences" ? "selected" : ""}>College of Medicine & Health Sciences</option><option value="engineering-technology" ${selected === "engineering-technology" ? "selected" : ""}>College of Engineering & Technology</option><option value="social-sciences" ${selected === "social-sciences" ? "selected" : ""}>College of Social Sciences</option></select><span class="mt-1 block text-[10px] text-slate-500">Publish one approved coordinator record for each college.</span></label>`;
     }
 
+    if (type === "campusDepartmentCounts") {
+      const value = record[key] && typeof record[key] === "object" ? JSON.stringify(record[key], null, 2) : String(record[key] || "");
+      return `<label class="text-xs font-semibold text-slate-600 sm:col-span-2">${safe(label)}<textarea name="${safe(key)}" rows="5" placeholder='{"department-id": 24}' class="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs text-slate-800">${safe(value)}</textarea><span class="mt-1 block text-[10px] font-normal leading-4 text-slate-500">Use department IDs as keys. Example: ${safe(JSON.stringify(Object.fromEntries(seniorDepartments.slice(0, 2).map(item => [item.id, 12]))))}. These published counts update live on the Campus Network.</span></label>`;
+    }
+
     if (type === "checkbox" || type === "checkboxOff") {
       const checked = type === "checkboxOff" ? record[key] === true : record[key] !== false;
       return `
@@ -748,10 +746,10 @@ function renderForm(record) {
 
     if (type === "branches") {
       return `
-        <label class="text-xs font-semibold text-slate-600 sm:col-span-2">
+        <label class="text-xs font-semibold text-slate-600 sm:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-br from-teal-50/80 via-white to-amber-50/60 p-4">
           ${safe(label)}
-          <textarea name="${safe(key)}" rows="4" placeholder="One leader per line: Branch name | Leader full name | Phone | public? yes" class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm">${safe(branchesText)}</textarea>
-          <span class="mt-1 block text-[10px] font-normal text-slate-400">One leader per line; repeat a branch name for multiple leaders. Phone stays private unless you enter “yes” and have the leader’s permission.</span>
+          <textarea name="${safe(key)}" rows="7" placeholder="One person per line: Branch or campus | Full name | Phone | public? yes&#10;Main campus | BROTHER NAME | 09... | yes&#10;Science campus | SISTER NAME | 09... | yes" class="mt-2 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm leading-6 outline-none transition focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10">${safe(branchesText)}</textarea>
+          <span class="mt-2 block text-[10px] font-normal leading-5 text-slate-500">Choose an existing university above to add these contacts to its current directory listing, or type a new university name. Add any number of leaders; no fixed officer titles are required. Put one person on each line and repeat the campus name for its other leaders. Format: <strong>Campus | Full name | phone | yes</strong>. Enter “yes” only when that person has approved public phone display.</span>
         </label>
       `;
     }
@@ -1066,49 +1064,6 @@ async function saveItem(event) {
   });
 
   if (section === "leaders") {
-    data.coordinatorPhone = data.coordinatorPhonePublic ? data.coordinatorPhone : "";
-    data.treasurerPhone = data.treasurerPhonePublic ? data.treasurerPhone : "";
-    data.secretaryPhone = data.secretaryPhonePublic ? data.secretaryPhone : "";
-    data.churchPriestPhone = data.churchPriestPhonePublic ? data.churchPriestPhone : "";
-    data.leaders = [
-      {
-        role: "Astebabari",
-        fullName: data.coordinatorName || "",
-        department: data.coordinatorDepartment || "",
-        phone: data.coordinatorPhone || "",
-        phonePublic: Boolean(data.coordinatorPhonePublic),
-        telegram: data.coordinatorTelegram || "",
-        telegramPublic: Boolean(data.coordinatorTelegram),
-        electedYear: data.electedYear,
-        termStartYear: data.termStartYear,
-        termEndYear: data.termEndYear
-      },
-      {
-        role: "Genzeb Yazh",
-        fullName: data.treasurerName || "",
-        department: data.treasurerDepartment || "",
-        phone: data.treasurerPhone || "",
-        phonePublic: Boolean(data.treasurerPhonePublic),
-        telegram: data.treasurerTelegram || "",
-        telegramPublic: Boolean(data.treasurerTelegram),
-        electedYear: data.electedYear,
-        termStartYear: data.termStartYear,
-        termEndYear: data.termEndYear
-      },
-      {
-        role: "Tsehafi",
-        fullName: data.secretaryName || "",
-        department: data.secretaryDepartment || "",
-        phone: data.secretaryPhone || "",
-        phonePublic: Boolean(data.secretaryPhonePublic),
-        telegram: data.secretaryTelegram || "",
-        telegramPublic: Boolean(data.secretaryTelegram),
-        electedYear: data.electedYear,
-        termStartYear: data.termStartYear,
-        termEndYear: data.termEndYear
-      }
-    ].filter(leader => leader.fullName);
-
     data.branches = parseBranchLeaders(data.branchesText || "");
     delete data.branchesText;
     data.churchPriest = {
@@ -1179,6 +1134,22 @@ async function saveItem(event) {
     data.schoolId = String(data.schoolId).trim();
     data.schoolName = String(data.schoolName).trim();
     data.coordinatorName = String(data.coordinatorName).trim();
+    try {
+      data.departmentCounts = data.departmentCounts ? JSON.parse(data.departmentCounts) : {};
+      const schoolGroups = {
+        "medicine-health-sciences": ["Health Sciences"],
+        "engineering-technology": ["Engineering & Tech"],
+        "social-sciences": ["Business & Economics", "Law & Humanities"]
+      }[data.schoolId];
+      const allowedDepartmentIds = new Set(seniorDepartments.filter(department => schoolGroups.includes(department.group)).map(department => department.id));
+      if (!data.departmentCounts || typeof data.departmentCounts !== "object" || Array.isArray(data.departmentCounts)
+        || Object.entries(data.departmentCounts).some(([departmentId, count]) => !allowedDepartmentIds.has(departmentId) || !Number.isInteger(Number(count)) || Number(count) < 0)) {
+        throw new Error("Use only department IDs belonging to the selected college and nonnegative whole-number counts.");
+      }
+    } catch (error) {
+      setAdminStatus(`Department counts must be valid JSON, for example {"med": 24}. ${error.message}`, "error");
+      return;
+    }
     data.telegram = String(data.telegram || "").replace(/^@/, "").trim();
     if (data.telegram && !/^[A-Za-z0-9_]{5,32}$/.test(data.telegram)) {
       setAdminStatus("Enter a valid Telegram username without the @ symbol.", "error");
@@ -1368,7 +1339,7 @@ async function saveItem(event) {
     }
     await loadPickerOptions();
     renderForm({});
-    setAdminStatus(section === "audioLibrary" ? "Saved and published · your Audio Room is updating now." : section === "studentAdvice" ? "Advice saved · the Advice Room is updating now." : section === "meetingPrograms" ? "Program saved · public details and protected meeting access are updated." : section === "meetingRoomMembers" ? "Meeting membership access saved securely." : section === "meetingAccessRequests" ? `Request ${data.status} · membership access updated securely.` : "Saved successfully · your website content is updated.", "success");
+    setAdminStatus(section === "audioLibrary" ? "Saved and published · your Audio Room is updating now." : section === "studentAdvice" ? "Advice saved · the Advice Room is updating now." : section === "meetingPrograms" ? "Program saved · public details and protected meeting access are updated." : section === "meetingRoomMembers" ? "Meeting membership access saved securely." : section === "meetingAccessRequests" ? `Request ${data.status} · membership access updated securely.` : section === "leaders" ? "Campus contacts saved · the Fellowship Leaders directory is updating live." : "Saved successfully · your website content is updated.", "success");
   } catch (error) {
     if (newStoragePath) {
       try { await deleteObject(ref(storage, newStoragePath)); } catch { /* No cleanup needed if upload did not finish. */ }
