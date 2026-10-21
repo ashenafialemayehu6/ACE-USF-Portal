@@ -1,9 +1,13 @@
-// ACE-USF Telegram webhook for Vercel.
+// ACE-USF Telegram webhook for Vercel with Abednego AI (አብደናጎ) Integration.
 // Persistent conversation state lives in Firestore so requests can run on any instance.
 const crypto = require("node:crypto");
+const { GoogleGenAI } = require("@google/genai");
 // Use Firebase Admin's modular API. This works with firebase-admin v14 on Vercel.
 const { cert, getApps, initializeApp } = require("firebase-admin/app");
 const { FieldValue, getFirestore } = require("firebase-admin/firestore");
+
+// Initialize Gemini Client (Uses GEMINI_API_KEY environment variable)
+const ai = new GoogleGenAI();
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN || "";
 const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET || "";
@@ -29,12 +33,15 @@ function initFirebase() {
   if (serviceAccount.private_key) serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
   initializeApp({ credential: cert(serviceAccount), projectId: serviceAccount.project_id });
 }
+
 function db() { initFirebase(); return getFirestore(); }
+
 function constantTimeMatch(a, b) {
   if (!a || !b) return false;
   const aa = Buffer.from(String(a)); const bb = Buffer.from(String(b));
   return aa.length === bb.length && crypto.timingSafeEqual(aa, bb);
 }
+
 async function tg(method, payload) {
   if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN is not configured.");
   const response = await fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
@@ -44,14 +51,17 @@ async function tg(method, payload) {
   if (!response.ok || !result.ok) throw new Error(`Telegram ${method} failed: ${result.description || response.status}`);
   return result.result;
 }
+
 const send = (chatId, text, reply_markup) => tg("sendMessage", {
   chat_id: chatId, text: String(text).slice(0, 4000), disable_web_page_preview: true,
   ...(reply_markup ? { reply_markup } : {})
 });
+
 const sessionRef = chatId => db().collection("telegramBotSessions").doc(String(chatId));
 async function getSession(chatId) { const s = await sessionRef(chatId).get(); return s.exists ? s.data() : null; }
 async function saveSession(chatId, value) { await sessionRef(chatId).set({ ...value, updatedAt: FieldValue.serverTimestamp() }); }
 async function clearSession(chatId) { await sessionRef(chatId).delete().catch(() => {}); }
+
 function keyboard() {
   return { inline_keyboard: [
     [{ text: "Share advice or testimony", callback_data: "advice:begin" }],
@@ -60,20 +70,59 @@ function keyboard() {
     [{ text: "Apostolic Library", url: `${siteUrl}/#apostolic-library` }, { text: "Campus Network", url: `${siteUrl}/#campus-network` }]
   ] };
 }
+
 function helpText() {
-  return ["Welcome to the ACE-USF Website Assistant.", "Use a command or ask about the website:",
-    "/library — Apostolic Library", "/campus — Campus Network", "/audio — Audio Room",
-    "/meetings — Meeting Hall", "/advice — share advice or testimony", "/support — contact the support team", "/whoami — show your Telegram ID"].join("\n");
+  return [
+    "በጌታ በኢየሱስ ስም ሰላም! 👋 Welcome to the ACE-USF Assistant.",
+    "I am powered by Abednego (አብደናጎ) AI to guide you in the Apostolic faith and student life.\n",
+    "Use a command or ask me any question directly:",
+    "/library — Apostolic Library",
+    "/campus — Campus Network",
+    "/audio — Audio Room",
+    "/meetings — Meeting Hall",
+    "/advice — Share advice or testimony",
+    "/support — Contact the support team",
+    "/whoami — Show your Telegram ID"
+  ].join("\n");
 }
-function answer(text) {
-  const q = String(text || "").toLowerCase();
-  if (/library|bible|book/.test(q)) return `Explore Scripture and Christian reading resources in the Apostolic Library: ${siteUrl}/#apostolic-library`;
-  if (/campus|university|college|department|city/.test(q)) return `Explore fellowship information by campus in the Campus Network: ${siteUrl}/#campus-network`;
-  if (/audio|preaching|sermon|song|poem|music/.test(q)) return `Open the Audio Room from the ACE-USF website to find available preaching, songs, and poems: ${siteUrl}`;
-  if (/meeting|bible study|conference|leaders|women.s ministry/.test(q)) return `Open the Meeting Hall from the ACE-USF website. Restricted gatherings require administrator approval: ${siteUrl}`;
-  if (/advice|graduate|alumni|family|student/.test(q)) return `Open the Advice Room on the website, or use /advice here to share a submission for review: ${siteUrl}`;
-  return helpText();
+
+/**
+ * Abednego AI Answering Core Powered by Gemini 2.5 Flash
+ */
+async function answerWithAbednego(text) {
+  try {
+    const abednegoPrompt = `
+      You are Abednego (አብደናጎ), the official AI Assistant for the ACE-USF (Apostolic Church Enterprise - University Student Fellowship) Digital Space.
+
+      Core Identity & Faith:
+      - You hold firm to the Oneness Apostolic faith (አንድ አምላክ ኢየሱስ - One God, Lord Jesus Christ, Acts 2:38, Deuteronomy 6:4, Colossians 2:9).
+      - Your character reflects biblical devotion, wisdom, holiness, humility, and faithful service to university students across Ethiopia.
+      - Respond in warm, respectful, and spiritually encouraging Amharic (አማርኛ) or English based on the student's language.
+
+      Site Reference: ${siteUrl}
+
+      Guidelines:
+      - For commands or resource queries, direct users respectfully to the relevant website section (${siteUrl}).
+      - For spiritual, academic, or campus life questions, provide wise, encouraging, and biblically sound answers in Jesus' Name (በጌታ በኢየሱስ ስም).
+      - Keep responses concise, helpful, and clear.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: text,
+      config: {
+        systemInstruction: abednegoPrompt,
+        temperature: 0.3
+      }
+    });
+
+    return response.text || `You can explore more on our portal: ${siteUrl}`;
+  } catch (err) {
+    console.error("Abednego AI Error:", err);
+    return `Welcome! Explore resources and fellowship details on our ACE-USF portal: ${siteUrl}`;
+  }
 }
+
 async function finishLink(chatId, from, code) {
   const database = db();
   const found = await database.collection("userProfiles").where("telegramLinkCode", "==", code).limit(2).get();
@@ -88,13 +137,16 @@ async function finishLink(chatId, from, code) {
     telegramLinkExpiresAt: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
   return send(chatId, "Your ACE-USF profile is now linked to this Telegram chat. Meeting Hall decisions and Advice Room review updates can reach you here.", keyboard());
 }
+
 const sources = [["Current student", "currentStudent"], ["Alumnus / graduate", "alumnus"], ["Student’s family", "studentFamily"], ["Church servant", "churchServant"]];
 const languages = ["Amharic", "Afaan Oromo", "Tigrinya", "Somali", "Afar", "Sidama", "Wolaytta", "Gurage", "Gamo", "Gedeo", "Hadiyya", "Kafa", "Kembata", "Dawro", "Silte", "Bench", "Konso", "Awi (Agaw)", "Kunama", "Nuer", "Me’en", "Anuak", "Harari", "English", "Other"];
 function choice(items, prefix) { return { inline_keyboard: items.map((item, index) => [{ text: item[0], callback_data: `${prefix}:${item[1] ?? index}` }]) }; }
+
 async function beginAdvice(chatId, from) {
   await saveSession(chatId, { type: "advice", step: "role", author: [from.first_name, from.last_name].filter(Boolean).join(" ").slice(0, 100) || "Telegram contributor", telegramName: [from.first_name, from.last_name].filter(Boolean).join(" ").slice(0, 100) });
   return send(chatId, "Who are you sharing advice as?", choice(sources.map(([label, id]) => [label, id]), "role"));
 }
+
 async function saveAdvice(chatId, message, session) {
   if (!adminIds.size) return send(chatId, "Advice submissions are temporarily unavailable. Please contact the ACE-USF team through the website.", keyboard());
   const database = db(); const ref = database.collection("siteContent").doc("studentAdvice").collection("items").doc();
@@ -111,14 +163,16 @@ async function saveAdvice(chatId, message, session) {
     for (const id of adminIds) await send(id, `New advice submission for review\n${session.author} · ${session.language}\nID: ${ref.id}\nApprove: /approveadvice ${ref.id}\nReject: /rejectadvice ${ref.id} reason`);
   }
   await clearSession(chatId);
-  await send(chatId, "Thank you for sharing. Your submission was sent for administrator review. May God bless you.", keyboard());
+  await send(chatId, "Thank you for sharing. Your submission was sent for administrator review. May God bless you in Jesus' Name.", keyboard());
 }
+
 async function handleAdviceCallback(chatId, data) {
   const session = await getSession(chatId); if (!session || session.type !== "advice") return send(chatId, "That form expired. Choose Share advice to begin again.", keyboard());
   const [kind, value] = data.split(":");
   if (kind === "role") { const source = sources.find(([, id]) => id === value); if (!source) return; session.sourceType = value; session.step = "language"; await saveSession(chatId, session); return send(chatId, "Choose the language for your advice.", choice(languages.map((label, i) => [label, i]), "lang")); }
-  if (kind === "lang") { const lang = languages[Number(value)]; if (!lang) return; session.language = lang; session.step = lang === "Other" ? "languageOther" : (session.sourceType === "churchServant" ? "churchPosition" : ["currentStudent", "alumnus"].includes(session.sourceType) ? "university" : "title"); await saveSession(chatId, session); const prompts = { languageOther: "Type the language name.", churchPosition: "What is your church position? For example, bishop, priest, or another servant.", university: "Which university or college should be shown?", title: "Give your message a short title." }; return send(chatId, prompts[session.step]); }
+  if (kind === "lang") { const lang = languages[Number(value)]; if (!lang) return; session.language = lang; session.step = lang === "Other" ? "languageOther" : (session.sourceType === "churchServant" ? "churchPosition" : ["currentStudent", "alumnus"].includes(session.sourceType) ? "university" : "title"); await saveSession(chatId, session); const prompts = { languageOther: "Type the language name.", churchPosition: "What is your church position? For example, servant or minister.", university: "Which university or college should be shown?", title: "Give your message a short title." }; return send(chatId, prompts[session.step]); }
 }
+
 async function processAdviceText(chatId, message, session) {
   const value = String(message.text || "").trim(); if (!value && !message.voice) return false;
   if (session.step === "languageOther") { session.language = value.slice(0, 60); session.step = session.sourceType === "churchServant" ? "churchPosition" : ["currentStudent", "alumnus"].includes(session.sourceType) ? "university" : "title"; }
@@ -131,12 +185,14 @@ async function processAdviceText(chatId, message, session) {
   await saveSession(chatId, session);
   return send(chatId, session.step === "department" ? "What is your department?" : session.step === "title" ? "Give your message a short title." : "Continue with your advice or testimony.");
 }
+
 async function pendingMeetings(chatId) {
   const snap = await db().collection("meetingAccessRequests").where("status", "==", "pending").limit(10).get();
   if (snap.empty) return send(chatId, "There are no pending Meeting Hall access requests.");
   const lines = snap.docs.map(d => { const x = d.data(); return `${x.requesterName || "Member"} · ${x.universityName || "University not provided"}\nDepartment: ${x.requestedDepartment || "Not recorded"} · Sex: ${x.profileSex || "Not recorded"}\nRole: ${x.fellowshipRole || "Role not provided"}\n${x.programTitle || "Meeting Hall"}\nID: ${d.id}\n/approve ${d.id} · /reject ${d.id} reason`; });
   return send(chatId, `Pending Meeting Hall requests:\n\n${lines.join("\n\n")}`);
 }
+
 async function reviewMeeting(id, status, note, actorId) {
   if (!id || id.includes("/")) return { message: "Use /approve ID or /reject ID reason." };
   const ref = db().doc(`meetingAccessRequests/${id}`);
@@ -162,6 +218,7 @@ async function reviewMeeting(id, status, note, actorId) {
     return { message: `Request ${status}.`, telegramChatId: x.telegramChatId, title: x.programTitle, adminNote: note };
   });
 }
+
 async function handleAdmin(message, text) {
   if (!adminIds.has(String(message.from?.id))) return false;
   const chatId = message.chat.id;
@@ -183,12 +240,13 @@ async function handleAdmin(message, text) {
     if (published && !String(itemSnap.data().advice || "").trim()) { await send(chatId, "This submission has no text yet. For a voice note, transcribe it in the website Admin Dashboard, save it, then approve it here."); return true; }
     await itemRef.update({ published, submissionStatus: published ? "approved" : "rejected", updatedAt: FieldValue.serverTimestamp() });
     await snap.ref.update({ status: published ? "approved" : "rejected", adminNote: String(m[3] || "").slice(0, 500), reviewedAt: FieldValue.serverTimestamp() });
-    await send(sub.telegramChatId, published ? "Your advice was reviewed and published in the Advice Room. Thank you. May God bless you." : `Thank you for sharing. The team could not publish this submission.${m[3] ? ` Note: ${m[3]}` : ""}`);
+    await send(sub.telegramChatId, published ? "Your advice was reviewed and published in the Advice Room. Thank you. May God bless you in Jesus' Name." : `Thank you for sharing. The team could not publish this submission.${m[3] ? ` Note: ${m[3]}` : ""}`);
     await send(chatId, `Advice submission ${published ? "approved" : "rejected"}.`); return true;
   }
   m = text.match(/^\/reply\s+(\d+)\s+([\s\S]+)$/i); if (m) { await send(m[1], `ACE-USF Support team:\n\n${m[2]}`); await send(chatId, "Your reply was sent."); return true; }
   return false;
 }
+
 async function handleMessage(message) {
   if (!message?.chat?.id || message.chat.type !== "private") return;
   const chatId = message.chat.id; const text = String(message.text || "").trim();
@@ -199,11 +257,18 @@ async function handleMessage(message) {
   if (/^\/(start|help)(?:@\w+)?$/i.test(text)) return send(chatId, helpText(), keyboard());
   if (/^\/support(?:@\w+)?$/i.test(text)) { await saveSession(chatId, { type: "support", step: "message", name: [message.from.first_name, message.from.last_name].filter(Boolean).join(" "), username: message.from.username || "" }); return send(chatId, "Please send your question or describe the problem. You may attach a photo or document. Send /cancel to stop. Never include passwords or payment-card details."); }
   if (/^\/(advice|share)(?:@\w+)?$/i.test(text)) return beginAdvice(chatId, message.from);
+
   const session = await getSession(chatId);
   if (session?.type === "support") { for (const adminId of adminIds) await tg("copyMessage", { chat_id: adminId, from_chat_id: chatId, message_id: message.message_id }); for (const adminId of adminIds) await send(adminId, `ACE-USF support report from ${session.name || "Telegram user"} @${session.username || "no username"}\nTelegram ID: ${chatId}\nReply with /reply ${chatId} your message`); await clearSession(chatId); return send(chatId, "Thank you. Your report has been sent to the ACE-USF support team."); }
   if (session?.type === "advice") return processAdviceText(chatId, message, session);
-  if (text) return send(chatId, answer(text), keyboard());
+
+  // Fallback to Abednego AI Engine for dynamic responses
+  if (text) {
+    const aiReply = await answerWithAbednego(text);
+    return send(chatId, aiReply, keyboard());
+  }
 }
+
 async function handleCallback(callback) {
   const chatId = callback.message?.chat?.id; if (!chatId) return;
   await tg("answerCallbackQuery", { callback_query_id: callback.id });
@@ -211,6 +276,7 @@ async function handleCallback(callback) {
   if (callback.data === "support:begin") { await saveSession(chatId, { type: "support", step: "message", name: [callback.from.first_name, callback.from.last_name].filter(Boolean).join(" "), username: callback.from.username || "" }); return send(chatId, "Please describe the problem. You may attach a photo or document. Send /cancel to stop."); }
   if (callback.data?.startsWith("role:") || callback.data?.startsWith("lang:")) return handleAdviceCallback(chatId, callback.data);
 }
+
 async function notifyWebsite(req) {
   const authHeader = req.headers.authorization || ""; const idToken = authHeader.replace(/^Bearer\s+/i, "");
   if (!idToken) return { status: 401, body: "Sign-in required" };
@@ -233,10 +299,11 @@ async function notifyWebsite(req) {
   if (kind === "advice-published") {
     if (typeof itemId !== "string" || !itemId || itemId.includes("/")) return { status: 400, body: "Invalid advice item ID" };
     const snap = await db().doc(`siteContent/studentAdvice/items/${itemId}`).get(); if (!snap.exists) return { status: 404, body: "Advice item not found" };
-    const privateSnap = await db().doc(`telegramAdviceSubmissions/${itemId}`).get(); if (privateSnap.exists && privateSnap.data().telegramChatId) await send(privateSnap.data().telegramChatId, "Your advice has been published in the ACE-USF Advice Room. Thank you for sharing. May God bless you.");
+    const privateSnap = await db().doc(`telegramAdviceSubmissions/${itemId}`).get(); if (privateSnap.exists && privateSnap.data().telegramChatId) await send(privateSnap.data().telegramChatId, "Your advice has been published in the ACE-USF Advice Room. Thank you for sharing. May God bless you in Jesus' Name.");
   }
   return { status: 200, body: "OK" };
 }
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method not allowed");
   try {
